@@ -121,10 +121,11 @@ def init_logging(filename=None):
 def get_default_config():
     """Returns a default config file"""
     config = {
+        'mode_name':'svm',
         'outdir': 'outdir',
         'seed': 42,
         'gpu': 0,
-        'dataset': 'CIFAR10',
+        'dataset': 'FICO',
         'num_classes': 10,
         'test_sample_num': 1,
         'test_start_index': 0,

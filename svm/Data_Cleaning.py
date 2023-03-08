@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+from torch.utils.data import Dataset
+
 def prepare_for_analysis(filename):
 	data_array = pd.read_csv(filename,header=None).values
 
@@ -21,3 +23,11 @@ def prepare_for_analysis(filename):
 			row_no += 1
 
 	return data_array
+
+class MyDataset(Dataset):
+    def __init__(self,data):
+        self.data=data
+    def __getitem__(self,index):
+        return self.data['X'][index],self.data['Y'][index]
+    def __len__(self):
+        return len(self.data["X"])

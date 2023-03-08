@@ -2,7 +2,7 @@
 
 import torch
 from torch.autograd import grad
-from pytorch_influence_functions.utils import display_progress
+from IF.utils import display_progress
 
 device = torch.device('cpu')
 def s_test(z_test, t_test, model, z_loader, gpu=-1, damp=0.01, scale=25.0,

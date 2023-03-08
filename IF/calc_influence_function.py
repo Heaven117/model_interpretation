@@ -8,8 +8,8 @@ import copy
 import logging
 
 from pathlib import Path
-from pytorch_influence_functions.influence_function import s_test, grad_z
-from pytorch_influence_functions.utils import save_json, display_progress
+from IF.influence_function import s_test, grad_z
+from IF.utils import save_json, display_progress
 
 
 def calc_s_test(model, test_loader, train_loader, save=False, gpu=-1,

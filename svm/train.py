@@ -8,20 +8,25 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import make_blobs
 
+import sys
+sys.path.append('./')
+from IF.utils import *
+from IF.calc_IF_svm import *
+from Data_Cleaning import prepare_for_analysis,MyDataset
+from SVM_model import SVM
 
-from Data_Cleaning import prepare_for_analysis
 device =  "mps" if torch.backends.mps.is_available() else "cpu" #change to cpu to reproduce cpu output 
 DATABASE = 'data/'
 DATASET = 'FICO'
 batch_size = 5
-EPOCH = 1
+EPOCH = 10
 c = 0.01
 lr = 0.1
+saveName = DATABASE+f"svm_{DATASET}_{EPOCH}.pth"
 
-
-def load_data(filename):
+def load_data():
+    filename = DATABASE + 'FICO_final_data.csv'
     data = prepare_for_analysis(filename)
 
     y = data[:,:1]
@@ -40,100 +45,71 @@ def load_data(filename):
 
     y_train = y[:int(0.8*num_samples)]
     y_test = y[int(0.8*num_samples):]
+    
+    train_set = MyDataset({"X":torch.Tensor(X_train),"Y":torch.Tensor(y_train)})
+    test_set = MyDataset({"X":torch.Tensor(X_test),"Y":torch.Tensor(y_test)})
 
-    return X_train,X_test,y_train,y_test,num_attributes
+    train_loader= DataLoader(train_set,batch_size=batch_size)
+    test_loader= DataLoader(test_set,batch_size=batch_size)
 
-def save_model(model,saveName):
+    # return X_train,X_test,y_train,y_test,num_attributes
+    return train_loader,test_loader
+
+def save_model(model):
     torch.save(model.state_dict(), saveName)
 
-def load_model(model,saveName):
+def load_model():
+    model = SVM().to(device)
     model.load_state_dict(torch.load(saveName))
     model.to(device)
     return model
 
-def train(X_train,y_train, model,reTrain=False):
-    saveName = DATABASE+f"svm_{DATASET}_{EPOCH}.pth"
-    if(os.path.exists(saveName) and reTrain == False):
-        load_model(model,saveName)
-        return
-       
-    X = torch.FloatTensor(X_train)
-    Y = torch.FloatTensor(y_train)
-    N = len(Y)
+def criterion(y,output,weight):
+    loss = torch.mean(torch.clamp(1 - y * output, min=0))
+    loss += c * (weight.t() @ weight) / 2.0
+    return loss
 
+def train(train_loader,test_loader):
+    model = SVM().to(device)
     optimizer = optim.SGD(model.parameters(), lr=lr)
-
     model.train()
     for epoch in range(EPOCH):
         sum_loss = 0
 
-        for i in range(0, N, batch_size):
-            x = X[i : i + batch_size].to(device)
-            y = Y[i : i + batch_size].to(device)
+        for i,data in enumerate(train_loader,0):
+            x = data[0].to(device)
+            y = data[1].to(device)
 
             optimizer.zero_grad()
             output = model(x).squeeze()
-            weight = model.weight.squeeze()
+            weight = model.layer.weight.squeeze()
 
-            loss = torch.mean(torch.clamp(1 - y * output, min=0))
-            loss += c * (weight.t() @ weight) / 2.0
+            # 折页损失
+            loss = criterion(y,output,weight)
+            # loss = torch.mean(torch.clamp(1 - y * output, min=0))
+            # loss += c * (weight.t() @ weight) / 2.0
 
             loss.backward()
             optimizer.step()
 
             sum_loss += float(loss)
 
-        print("Epoch: {:4d}\tloss: {}".format(epoch, sum_loss / N))
-    save_model(model,saveName)
-    
-def visualize(X, Y, model):
-    W = model.weight.squeeze().detach().cpu().numpy()
-    b = model.bias.squeeze().detach().cpu().numpy()
+        print("Epoch: {:4d}\tloss: {}".format(epoch, sum_loss / len(train_loader.dataset)))
+    save_model(model)
+    return model
 
-    delta = 0.001
-    x = np.arange(X[:, 0].min(), X[:, 0].max(), delta)
-    y = np.arange(X[:, 1].min(), X[:, 1].max(), delta)
-    x, y = np.meshgrid(x, y)
-    xy = list(map(np.ravel, [x, y]))
-
-    z = (W.dot(xy) + b).reshape(x.shape)
-    z[np.where(z > 1.0)] = 4
-    z[np.where((z > 0.0) & (z <= 1.0))] = 3
-    z[np.where((z > -1.0) & (z <= 0.0))] = 2
-    z[np.where(z <= -1.0)] = 1
-
-    plt.figure(figsize=(10, 10))
-    plt.xlim([X[:, 0].min() + delta, X[:, 0].max() - delta])
-    plt.ylim([X[:, 1].min() + delta, X[:, 1].max() - delta])
-    plt.contourf(x, y, z, alpha=0.8, cmap="Greys")
-    plt.scatter(x=X[:, 0], y=X[:, 1], c="black", s=10)
-    plt.tight_layout()
-    plt.show()
-
-
+def test(train_loader,test_loader,model):
+    config = get_default_config()
+    # init_logging('logfile.log')
+    calc_main(config, model,train_loader,test_loader)
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("--c", type=float, default=0.01)
-    # parser.add_argument("--lr", type=float, default=0.1)
-    # parser.add_argument("--batch_size", type=int, default=5)
-    # parser.add_argument("--epoch", type=int, default=10)
-    # = parser.parse_)
-    # print(
+    train_loader,test_loader= load_data()
 
-    fileName = DATABASE + 'FICO_final_data.csv'
-    X_train,X_test,y_train,y_test ,num_attributes= load_data(fileName)
+    if(os.path.exists(saveName)):
+        model = load_model()
+    else:
+        model = train(train_loader,test_loader)
 
-    model = nn.Linear(num_attributes, 1)
-    model.to(device)
-    
-    train(X_train,y_train, model)
-    visualize(X_train,y_train, model)
-
-    # X, Y = make_blobs(n_samples=500, centers=2, random_state=0, cluster_std=0.4)
-    # X = (X - X.mean()) / X.std()
-    # Y[np.where(Y == 0)] = -1
-    # train(X, Y, model)
-    # visualize(X, Y, model)
-
-
+    test(train_loader,test_loader,model)
+   
