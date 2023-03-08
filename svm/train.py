@@ -8,7 +8,7 @@ sys.path.append(os.curdir)
 from utils import *
 from IF.IF_svm import *
 from svm.SVM_model import SVM
-from svm.data_process import load_data
+from svm.data_process import loader_data
 
 from utils import get_default_config
 model_config = get_default_config()[0]
@@ -66,7 +66,7 @@ def train(train_loader,test_loader):
     return model
 
 if __name__ == "__main__":
-    train_loader,test_loader= load_data()
+    train_loader,test_loader= loader_data()
 
     model = train(train_loader,test_loader)
 
