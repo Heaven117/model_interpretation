@@ -91,7 +91,7 @@ def display_progress(text, current_step, last_step, enabled=True,
     bar = '=' * filled_len + '.' * (bar_len - filled_len)
 
     bar = f"{text}[{bar:s}] {current_step:d} / {last_step:d}"
-    if current_step < last_step-1:
+    if current_step <= last_step-1:
         # Erase to end of line and print
         sys.stdout.write("\033[K" + bar + "\r")
     else:
@@ -124,13 +124,13 @@ def get_default_config():
         'mode_name':'svm',
         'outdir': 'outdir',
         'seed': 42,
-        'gpu': 0,
+        # 'gpu': 0,
         'dataset': 'FICO',
         'num_classes': 10,
         'test_sample_num': 1,
         'test_start_index': 0,
-        'recursion_depth': 1,
-        'r_averaging': 1,
+        'recursion_depth': 10,
+        # 'r_averaging': 1,
         'scale': None,
         'damp': None,
         'calc_method': 'img_wise',

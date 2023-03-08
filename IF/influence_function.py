@@ -3,8 +3,8 @@
 import torch
 from torch.autograd import grad
 from IF.utils import display_progress
+from svm.SVM_model import device
 
-device = torch.device('cpu')
 def s_test(z_test, t_test, model, z_loader, gpu=-1, damp=0.01, scale=25.0,
            recursion_depth=5000):
     """s_test can be precomputed for each test point of interest, and then
@@ -74,8 +74,7 @@ def calc_loss(y, t):
 
 
 def grad_z(z, t, model, gpu=-1):
-    """Calculates the gradient z. One grad_z should be computed for each
-    training sample.
+    """Calculates the gradient z. One grad_z should be computed for each training sample.
 
     Arguments:
         z: torch tensor, training data points

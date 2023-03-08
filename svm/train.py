@@ -12,14 +12,14 @@ from sklearn.preprocessing import StandardScaler
 import sys
 sys.path.append('./')
 from IF.utils import *
-from IF.calc_IF_svm import *
+from IF.IF_svm import *
 from Data_Cleaning import prepare_for_analysis,MyDataset
-from SVM_model import SVM
+from svm.SVM_model import SVM
 
-device =  "mps" if torch.backends.mps.is_available() else "cpu" #change to cpu to reproduce cpu output 
+device =  torch.device('cpu')
 DATABASE = 'data/'
 DATASET = 'FICO'
-batch_size = 5
+BATCH_SIZE = 5
 EPOCH = 10
 c = 0.01
 lr = 0.1
@@ -32,12 +32,10 @@ def load_data():
     y = data[:,:1]
     scaler = StandardScaler()
     X = scaler.fit_transform(data[:,1:])
+    # mean = scaler.mean_
+    # scale = scaler.scale_
 
-    # -- Needs to be retained for inserting new samples
-    mean = scaler.mean_
-    scale = scaler.scale_
-
-    num_samples , num_attributes = X.shape
+    num_samples = X.shape[0]
 
     # -- Split Training/Test -- 
     X_train = X[:int(0.8*num_samples)]
@@ -49,8 +47,8 @@ def load_data():
     train_set = MyDataset({"X":torch.Tensor(X_train),"Y":torch.Tensor(y_train)})
     test_set = MyDataset({"X":torch.Tensor(X_test),"Y":torch.Tensor(y_test)})
 
-    train_loader= DataLoader(train_set,batch_size=batch_size)
-    test_loader= DataLoader(test_set,batch_size=batch_size)
+    train_loader= DataLoader(train_set,batch_size=BATCH_SIZE)
+    test_loader= DataLoader(test_set,batch_size=BATCH_SIZE)
 
     # return X_train,X_test,y_train,y_test,num_attributes
     return train_loader,test_loader
@@ -68,6 +66,10 @@ def criterion(y,output,weight):
     loss = torch.mean(torch.clamp(1 - y * output, min=0))
     loss += c * (weight.t() @ weight) / 2.0
     return loss
+
+    # loss = 1-y * output
+    # loss[loss<=0] = 0
+    # return torch.sum(loss)
 
 def train(train_loader,test_loader):
     model = SVM().to(device)
