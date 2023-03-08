@@ -5,11 +5,13 @@ import time
 import numpy as np
 
 from torch.autograd import grad
-from IF.utils import display_progress
-from svm.train import criterion,device
+from utils import display_progress
 
 from pathlib import Path
-from IF.utils import save_json, display_progress
+from utils import save_json, display_progress
+
+from utils import get_default_config
+device = get_default_config()[0]['device']
 
 """
 s_test is the Inverse Hessian Vector Product.(HVP)
@@ -124,15 +126,16 @@ def calc_influence_single(model, train_loader, test_loader,test_id_num, recursio
     return influences, harmful.tolist(), helpful.tolist(), test_id_num
 
 # 计算所有test data的影响
-def calc_main(config, model,train_loader,test_loader):
-    outdir = Path(config['outdir'])
+def calc_main(config, model,train_loader,test_loader,start=0):
+    outdir = Path(config['out_path'])
     outdir.mkdir(exist_ok=True, parents=True)
 
     # todo test设置1
     test_dataset_iter_len = 10
     # test_dataset_iter_len = len(test_loader.dataset)
     influences = {}
-    for i in range(test_dataset_iter_len):
+    last = start
+    for i in range(start,test_dataset_iter_len):
         start_time = time.time()
         influence, harmful, helpful, _ = calc_influence_single(model,train_loader, test_loader, test_id_num=i, recursion_depth=config['recursion_depth'])
         end_time = time.time()
@@ -145,7 +148,10 @@ def calc_main(config, model,train_loader,test_loader):
         influences[str(i)]['harmful'] = harmful[:500]
         influences[str(i)]['helpful'] = helpful[:500]
 
-        influences_path = outdir.joinpath(f"influence_res_{config['mode_name']}-{test_dataset_iter_len}.json")
-        save_json(influences, influences_path,overwrite_if_exists=True)
-        display_progress("Test samples save done, total: ", i, test_dataset_iter_len)
+        if(i!=0 and i % 99 == 0):
+            influences_path = outdir.joinpath(f"influence_tmp_{last}-{i}.json")
+            save_json(influences, influences_path,overwrite_if_exists=True)
+            last = i
 
+    influences_path = outdir.joinpath(f"influence_tmp_{last}-{i}.json")
+    save_json(influences, influences_path,overwrite_if_exists=True)

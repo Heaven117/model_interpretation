@@ -1,64 +1,29 @@
-import argparse
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import os
 import torch
-import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from sklearn.preprocessing import StandardScaler
 
+import os
 import sys
-sys.path.append('./')
-from IF.utils import *
+sys.path.append(os.curdir)
+
+from utils import *
 from IF.IF_svm import *
-from Data_Cleaning import prepare_for_analysis,MyDataset
 from svm.SVM_model import SVM
+from svm.data_process import load_data
 
-device =  torch.device('cpu')
-DATABASE = 'data/'
-DATASET = 'FICO'
-BATCH_SIZE = 5
-EPOCH = 10
-c = 0.01
-lr = 0.1
-saveName = DATABASE+f"svm_{DATASET}_{EPOCH}.pth"
-
-def load_data():
-    filename = DATABASE + 'FICO_final_data.csv'
-    data = prepare_for_analysis(filename)
-
-    y = data[:,:1]
-    scaler = StandardScaler()
-    X = scaler.fit_transform(data[:,1:])
-    # mean = scaler.mean_
-    # scale = scaler.scale_
-
-    num_samples = X.shape[0]
-
-    # -- Split Training/Test -- 
-    X_train = X[:int(0.8*num_samples)]
-    X_test = X[int(0.8*num_samples):]
-
-    y_train = y[:int(0.8*num_samples)]
-    y_test = y[int(0.8*num_samples):]
-    
-    train_set = MyDataset({"X":torch.Tensor(X_train),"Y":torch.Tensor(y_train)})
-    test_set = MyDataset({"X":torch.Tensor(X_test),"Y":torch.Tensor(y_test)})
-
-    train_loader= DataLoader(train_set,batch_size=BATCH_SIZE)
-    test_loader= DataLoader(test_set,batch_size=BATCH_SIZE)
-
-    # return X_train,X_test,y_train,y_test,num_attributes
-    return train_loader,test_loader
+from utils import get_default_config
+model_config = get_default_config()[0]
+save_path = model_config['save_path']
+device = model_config['device']
+lr = model_config['lr']
+c = model_config['c']
+EPOCH = model_config['epoch']
 
 def save_model(model):
-    torch.save(model.state_dict(), saveName)
+    torch.save(model.state_dict(), save_path)
 
-def load_model():
+def load_model(save_path):
     model = SVM().to(device)
-    model.load_state_dict(torch.load(saveName))
+    model.load_state_dict(torch.load(save_path))
     model.to(device)
     return model
 
@@ -100,18 +65,10 @@ def train(train_loader,test_loader):
     save_model(model)
     return model
 
-def test(train_loader,test_loader,model):
-    config = get_default_config()
-    # init_logging('logfile.log')
-    calc_main(config, model,train_loader,test_loader)
-
 if __name__ == "__main__":
     train_loader,test_loader= load_data()
 
-    if(os.path.exists(saveName)):
-        model = load_model()
-    else:
-        model = train(train_loader,test_loader)
+    model = train(train_loader,test_loader)
 
-    test(train_loader,test_loader,model)
+    print("train model done.")
    

@@ -9,7 +9,7 @@ import logging
 
 from pathlib import Path
 from IF.influence_function import s_test, grad_z
-from IF.utils import save_json, display_progress
+from utils import save_json, display_progress
 
 
 def calc_s_test(model, test_loader, train_loader, save=False, gpu=-1,

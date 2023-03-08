@@ -11,6 +11,22 @@
             "program": "${workspaceFolder}\/svm\/train.py",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Python: influence",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\/IF\/run_influence.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: anchor",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\/Anchor\/run_anchor.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

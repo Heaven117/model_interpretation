@@ -8,3 +8,6 @@ class SVM(nn.Module):
     def forward(self, x):
         x = self.layer(x)
         return x
+
+class ModelError(Exception):
+    pass

@@ -2,7 +2,7 @@
 
 import torch
 from torch.autograd import grad
-from IF.utils import display_progress
+from utils import display_progress
 from svm.SVM_model import device
 
 def s_test(z_test, t_test, model, z_loader, gpu=-1, damp=0.01, scale=25.0,
