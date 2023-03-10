@@ -6,11 +6,9 @@ import sys
 sys.path.append(os.curdir)
 
 from utils import *
-from IF.IF_svm import *
 from svm.SVM_model import SVM
 from svm.data_process import loader_data
 
-from utils import get_default_config
 model_config = get_default_config()[0]
 save_path = model_config['save_path']
 device = model_config['device']
