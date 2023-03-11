@@ -8,25 +8,25 @@
             "name": "Python: train",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\/svm\/train.py",
+            "program": "${workspaceFolder}\/server\/svm\/train.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
         },
         {
             "name": "Python: influence",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\/IF\/run_influence.py",
+            "program": "${workspaceFolder}\/server\/IF\/run_influence.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
         },
         {
             "name": "Python: anchor",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\/Anchor\/run_anchor.py",
+            "program": "${workspaceFolder}\/server\/Anchor\/run_anchor.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
         }
     ]
 }

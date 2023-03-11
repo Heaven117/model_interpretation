@@ -8,7 +8,7 @@ import numpy as np
 from torch.autograd import grad
 
 from svm.data_process import loader_data
-from svm.train import load_model,train
+from svm.run_model import load_model,train
 from pathlib import Path
 from utils import save_json, display_progress,get_default_config
 device = get_default_config()[0]['device']
@@ -158,7 +158,9 @@ def calc_main(config, model,train_loader,test_loader,start=0):
 
 if __name__ == "__main__":
     model_config,IF_config = get_default_config()
-    train_loader,test_loader= loader_data()
+    batch_size = model_config['batch_size']
+
+    train_loader,test_loader= loader_data(batch_size)
 
     save_path = model_config['save_path']
     if(os.path.exists(save_path)):
