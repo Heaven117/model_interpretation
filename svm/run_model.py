@@ -1,3 +1,4 @@
+from sklearn.preprocessing import StandardScaler
 import torch
 import torch.optim as optim
 
@@ -7,7 +8,7 @@ sys.path.append(os.curdir)
 
 from utils import *
 from svm.SVM_model import SVM
-from svm.data_process import loader_data
+from svm.data_process import loader_data, prepare_for_analysis
 
 model_config = get_default_config()[0]
 save_path = model_config['save_path']
@@ -15,6 +16,8 @@ device = model_config['device']
 lr = model_config['lr']
 c = model_config['c']
 EPOCH = model_config['epoch']
+dataFile = model_config['dataFile'] 
+
 
 def save_model(model):
     torch.save(model.state_dict(), save_path)
@@ -84,10 +87,60 @@ def test(train_set,test_set):
     for name,param in model.named_parameters():
         print(name, param)
 
-if __name__ == "__main__":
-    train_loader,test_loader,train_set,test_set= loader_data()
+def prediction():
+    fp = open("./data/pre_data.csv", 'w')
+    fp.write("ID,Percentage,Category\n")
 
-    model = train(train_loader)
-    print("=====================train model done.")
-    test(train_set,test_set)
+
+    model = load_model(save_path)
+    data = prepare_for_analysis(dataFile)
+    y = data[:,:1].squeeze()
+    scaler = StandardScaler()
+    X = scaler.fit_transform(data[:,1:]).astype('float32')
+    X =torch.Tensor(X).to(device)
+
+    S = torch.nn.Sigmoid()
+    y_pred = S(model(X)).detach().numpy().squeeze()
+
+    for sample in range(len(y_pred)):
+        percent = y_pred[sample]
+        predicted = 0
+        if percent>.5:
+            predicted = 1
+        ground_truth = y[sample]
+        model_correct = 1
+        if predicted != ground_truth:
+            model_correct = 0
+        category = "NA";
+        if (predicted, model_correct) == (0,0):
+            category = "FN"
+        elif (predicted, model_correct) == (0,1):
+            category = "TN"
+        elif (predicted, model_correct) == (1,0):
+            category = "FP"
+        elif (predicted, model_correct) == (1,1):
+            category = "TP"
+        
+        fp.write(str(sample))
+        fp.write(',')
+        fp.write(str(percent))
+        fp.write(',')
+        fp.write(str(category))
+        fp.write('\n')
+    fp.close()
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    # train_loader,test_loader,train_set,test_set= loader_data()
+
+    # model = train(train_loader)
+    # print("=====================train model done.")
+    # test(train_set,test_set)
+
+    prediction()
    

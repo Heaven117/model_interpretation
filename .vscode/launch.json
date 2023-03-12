@@ -8,7 +8,7 @@
             "name": "Python: train",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\/server\/svm\/train.py",
+            "program": "${workspaceFolder}\/svm\/run_model.py",
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -16,7 +16,7 @@
             "name": "Python: influence",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\/server\/IF\/run_influence.py",
+            "program": "${workspaceFolder}\/IF\/run_influence.py",
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -24,7 +24,7 @@
             "name": "Python: anchor",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\/server\/Anchor\/run_anchor.py",
+            "program": "${workspaceFolder}\/Anchor\/run_anchor.py",
             "console": "integratedTerminal",
             "justMyCode": false
         }

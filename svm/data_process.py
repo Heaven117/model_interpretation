@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset
 
-from server.utils import get_default_config
+from utils import get_default_config
 model_config = get_default_config()[0]
 dataFile = model_config['dataFile'] 
 
