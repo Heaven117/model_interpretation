@@ -10,8 +10,67 @@ from torch.autograd import grad
 from svm.data_process import loader_data
 from svm.run_model import load_model,train
 from pathlib import Path
-from utils import save_json, display_progress,get_default_config
-device = get_default_config()[0]['device']
+from utils import save_json, display_progress,model_config,IF_config,save_path
+device = model_config['device']
+mode_name = model_config['mode_name']
+epoch = model_config['epoch']
+
+"""
+Hessian * vector
+Arguments:
+    y: loss func 满足二阶可导
+    w: params
+    v: vector will be multiplied with the Hessian, same shape as w
+Returns:
+    return_grads: product of Hessian and v.
+"""
+def hvp(y, w, v):
+    if len(w) != len(v):
+        raise(ValueError("w and v must have the same length."))
+
+    # First backprop
+    first_grads = grad(y, w, retain_graph=True, create_graph=True)
+
+    # Elementwise products
+    elemwise_products = 0
+    for grad_elem, v_elem in zip(first_grads, v):
+        elemwise_products += torch.sum(grad_elem * v_elem)
+
+    # Second backprop
+    # todo 第二次求导在mac有问题
+    return_grads = grad(elemwise_products, w, retain_graph=True)
+
+    return return_grads
+
+"""
+损失函数必须二阶可导
+hinge loss不可微,因此采用smoothHinge
+todo 
+"""
+def calc_loss(y, output):
+    temp = 0.001
+    s = y*output
+    exponents = (1-s)/temp
+    max_elems = torch.maximum(exponents, torch.zeros_like(exponents))
+    loss =  temp * (max_elems + torch.log(
+        torch.exp(exponents - max_elems) + 
+        torch.exp(torch.zeros_like(exponents) - max_elems)))
+    
+    # loss = 1-y*output
+    # loss[loss<=0] = 0
+    return torch.sum(loss)
+
+"""
+计算梯度。每个train data都应该计算一个grad_z。
+"""
+def grad_z(z, t, model):
+    model.eval()
+    z, t = z.to(device), t.to(device)
+    y = model(z)
+    loss = calc_loss(y, t)
+    # Compute sum of gradients from model parameters to loss
+    params = [ p for p in model.parameters() if p.requires_grad ]
+    return list(grad(loss, params, create_graph=True))
 
 """
 s_test is the Inverse Hessian Vector Product.(HVP)
@@ -46,58 +105,6 @@ def s_test(z, t, model, train_loader, damp=0.01, scale=25.0, recursion_depth=500
         display_progress("Calc. s_test recursions: ", i, recursion_depth)
     return h_estimate
 
-"""
-计算损失 
-todo 
-"""
-def calc_loss(y, t):
-    y = torch.nn.functional.sigmoid(y)
-    loss = 1-y*t
-    loss[loss<=0] = 0
-    # y = torch.nn.functional.log_softmax(y)
-    # loss = torch.nn.functional.nll_loss( y, t, weight=None, reduction='mean')
-    return torch.sum(loss)
-
-
-"""
-计算梯度。每个train data都应该计算一个grad_z。
-"""
-def grad_z(z, t, model):
-    model.eval()
-    z, t = z.to(device), t.to(device)
-    y = model(z)
-    loss = calc_loss(y, t)
-    # Compute sum of gradients from model parameters to loss
-    params = [ p for p in model.parameters() if p.requires_grad ]
-    return list(grad(loss, params, create_graph=True))
-
-
-"""
-Hessian * vector
-Arguments:
-    y: loss func 满足二阶可导
-    w: params
-    v: vector will be multiplied with the Hessian, same shape as w
-Returns:
-    return_grads: product of Hessian and v.
-"""
-def hvp(y, w, v):
-    if len(w) != len(v):
-        raise(ValueError("w and v must have the same length."))
-
-    # First backprop
-    first_grads = grad(y, w, retain_graph=True, create_graph=True)
-
-    # Elementwise products
-    elemwise_products = 0
-    for grad_elem, v_elem in zip(first_grads, v):
-        elemwise_products += torch.sum(grad_elem * v_elem)
-
-    # Second backprop
-    # todo 第二次求导在mac有问题
-    return_grads = grad(elemwise_products, w, retain_graph=True)
-
-    return return_grads
 
 # 计算所有train data对单个test data的影响
 def calc_influence_single(model, train_loader, test_loader,test_id_num, recursion_depth,  s_test_vec=None):
@@ -131,7 +138,7 @@ def calc_main(config, model,train_loader,test_loader,start=0):
     outdir.mkdir(exist_ok=True, parents=True)
 
     # todo test设置1
-    test_dataset_iter_len = 10
+    test_dataset_iter_len = 20
     # test_dataset_iter_len = len(test_loader.dataset)
     influences = {}
     last = start
@@ -153,20 +160,18 @@ def calc_main(config, model,train_loader,test_loader,start=0):
             save_json(influences, influences_path,overwrite_if_exists=True)
             last = i
 
-    influences_path = outdir.joinpath(f"influence_tmp_{last}-{i}.json")
+    influences_path = outdir.joinpath(f"influence_{mode_name}_{epoch}-{i}.json")
     save_json(influences, influences_path,overwrite_if_exists=True)
 
 if __name__ == "__main__":
-    model_config,IF_config = get_default_config()
     batch_size = model_config['batch_size']
 
-    train_loader,test_loader= loader_data(batch_size)
+    train_loader,test_loader,train_set,test_set= loader_data(batch_size)
 
-    save_path = model_config['save_path']
     if(os.path.exists(save_path)):
         model = load_model(save_path)
     else:
         model = train(train_loader,test_loader)
 
-    calc_main(IF_config, model,train_loader,test_loader)
+    calc_main(IF_config, model,train_loader,test_loader,start=0)
    

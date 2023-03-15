@@ -120,29 +120,45 @@ def init_logging(filename=None):
                             format=log_format)
 
 """Returns a default config file"""
-def get_default_config():
-    model_config = {
-        'mode_name':'svm',
-        'dataset': 'FICO',
-        'device' : torch.device('cpu'),
-        'seed': 42,
-        'epoch' : 100,
-        'batch_size' : 5,
-        'lr' : 0.001,
-        'c' : 0.01,
-        'dataFile':'data/FICO_final_data.csv'
-    }
-    save_path='data/svm/'+f"svm_{model_config['dataset']}_{model_config['epoch']}.pth"
-    model_config['save_path'] = save_path
+# def get_default_config():
+#     model_config = {
+#         'mode_name':'svm',
+#         'dataset': 'FICO',
+#         'device' : torch.device('cpu'),
+#         'seed': 42,
+#         'epoch' : 100,
+#         'batch_size' : 5,
+#         'lr' : 0.001,
+#         'c' : 0.01,
+#         'dataFile':'data/FICO_final_data.csv'
+#     }
+#     save_path='data/svm/'+f"svm_{model_config['dataset']}_{model_config['epoch']}.pth"
+#     model_config['save_path'] = save_path
 
-    IF_config ={
-        'out_path': 'data/influence',
-        'recursion_depth': 10,
+#     IF_config ={
+#         'out_path': 'data/influence',
+#         'recursion_depth': 10,
         
-    }
+#     }
 
-    return model_config,IF_config
+#     return model_config,IF_config
+model_config = {
+    'mode_name':'svm',
+    'dataset': 'FICO',
+    'device' : torch.device('cpu'),
+    'seed': 42,
+    'epoch' : 100,
+    'batch_size' : 5,
+    'lr' : 0.001,
+    'c' : 0.01,
+    'dataFile':'data/FICO_final_data.csv'
+}
+save_path='data/svm/'+f"svm_{model_config['dataset']}_{model_config['epoch']}.pth"
 
+IF_config ={
+    'out_path': 'data/influence',
+    'recursion_depth': 10,
+}
 
 ft_names = ["External Risk Estimate", 
             "Months Since Oldest Trade Open",

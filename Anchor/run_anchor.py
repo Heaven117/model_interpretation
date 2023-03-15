@@ -9,7 +9,7 @@ sys.path.append(os.curdir)
 from svm.data_process import load_data, loader_data
 from svm.run_model import load_model,test
 from svm.SVM_model import ModelError
-from server.utils import get_default_config,ft_names
+from utils import ft_names,model_config,IF_config ,save_path
 
 # 简易版anchor
 def evaluate_data_set(data):
@@ -131,11 +131,9 @@ def anchors_tabular(model,idx,train_set,test_set):
     print('Anchor test coverage: %f' % (fit_anchor.shape[0] / float(X_train.shape[0])))
 
 if __name__ == "__main__":
-    model_config,IF_config = get_default_config()
     train_loader,test_loader,train_set,test_set= loader_data()
     test(train_set,test_set)
   
-    save_path = model_config['save_path']
     if(os.path.exists(save_path)):
         model = load_model(save_path)
     else:

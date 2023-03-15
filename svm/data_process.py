@@ -6,8 +6,7 @@ from torch.utils.data import DataLoader
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset
 
-from utils import get_default_config
-model_config = get_default_config()[0]
+from utils import model_config
 dataFile = model_config['dataFile'] 
 
 class MyDataset(Dataset):
@@ -42,7 +41,7 @@ class MyDataset(Dataset):
         return self.scale_data['X'][index],self.scale_data['Y'][index]
     
     def __len__(self):
-        return len(self.data["X"])
+        return len(self.scale_data["X"])
     
     def scaled_row(self,row):
         scld = []

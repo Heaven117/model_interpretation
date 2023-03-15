@@ -6,12 +6,11 @@ import os
 import sys
 sys.path.append(os.curdir)
 
-from utils import *
+from utils import model_config,save_path
 from svm.SVM_model import SVM
 from svm.data_process import loader_data, prepare_for_analysis
+import torch.nn as nn
 
-model_config = get_default_config()[0]
-save_path = model_config['save_path']
 device = model_config['device']
 lr = model_config['lr']
 c = model_config['c']
@@ -28,11 +27,7 @@ def load_model(save_path):
     model.to(device)
     return model
 
-def criterion(y,output,weight):
-    # loss = torch.mean(torch.clamp(1 - y * output, min=0))
-    # loss += c * (weight.t() @ weight) / 2.0
-    # return loss
-
+def loss(y,output):
     loss = 1-y * output
     loss[loss<=0] = 0
     return torch.sum(loss)
@@ -51,9 +46,10 @@ def train(train_loader):
             optimizer.zero_grad()
             output = model(x)
 
-            # 折页损失
-            weight = model.layer.weight.squeeze()
-            loss = criterion(y,output,weight)
+            
+            # loss = loss(y,output)
+            loss = torch.mean(torch.clamp(1 - output.t() * y, min=0))  # hinge loss
+            loss += 0.01 * torch.mean(model.layer.weight ** 2)  # l2 penalty
 
             loss.backward()
             optimizer.step()
@@ -131,16 +127,12 @@ def prediction():
 
 
 
-
-
-
-
 if __name__ == "__main__":
-    # train_loader,test_loader,train_set,test_set= loader_data()
+    train_loader,test_loader,train_set,test_set= loader_data()
 
-    # model = train(train_loader)
-    # print("=====================train model done.")
-    # test(train_set,test_set)
+    model = train(train_loader)
+    print("=====================train model done.")
+    test(train_set,test_set)
 
-    prediction()
+    # prediction()
    
