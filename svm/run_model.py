@@ -6,9 +6,9 @@ import os
 import sys
 sys.path.append(os.curdir)
 
-from utils import model_config,save_path
+from utils.helper import model_config,save_path
 from svm.SVM_model import SVM
-from svm.data_process import loader_data, prepare_for_analysis
+from svm.data_process import loader_data, prepare_for_analysis,loader_adult_income_dataset
 import torch.nn as nn
 
 device = model_config['device']
@@ -128,11 +128,12 @@ def prediction():
 
 
 if __name__ == "__main__":
-    train_loader,test_loader,train_set,test_set= loader_data()
+    # train_loader,test_loader,train_set,test_set= loader_data()
+    train_loader,test_loader,train_set,test_set = loader_adult_income_dataset()
 
-    model = train(train_loader)
-    print("=====================train model done.")
-    test(train_set,test_set)
+    # model = train(train_loader)
+    # print("=====================train model done.")
+    # test(train_set,test_set)
 
     # prediction()
    

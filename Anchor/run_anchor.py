@@ -9,7 +9,7 @@ sys.path.append(os.curdir)
 from svm.data_process import load_data, loader_data
 from svm.run_model import load_model,test
 from svm.SVM_model import ModelError
-from utils import ft_names,model_config,IF_config ,save_path
+from utils.helper import ft_names,model_config,IF_config ,save_path
 
 # 简易版anchor
 def evaluate_data_set(data):
@@ -141,6 +141,6 @@ if __name__ == "__main__":
 
     # sample_id = 1
     for sample_id in range(5):
-        find_anchors(model,train_loader,sample_id,100)
+        # find_anchors(model,train_loader,sample_id,100)
         anchors_tabular(model,sample_id,train_set,test_set)
 

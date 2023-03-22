@@ -5,26 +5,42 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: run_MLP",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\/models\/run_MLP.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: factual",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\/counterfactual\/run_factual.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Python: train",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}\/svm\/run_model.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": true
         },
         {
             "name": "Python: influence",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\/IF\/run_influence.py",
+            "program": "${workspaceFolder}\/IF\/test_influence.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": true
         },
         {
             "name": "Python: anchor",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\/Anchor\/run_anchor.py",
+            "program": "${workspaceFolder}\/Anchor\/run_anchor2.py",
             "console": "integratedTerminal",
             "justMyCode": false
         }
