@@ -40,7 +40,7 @@
       "name": "Python: influence",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/IF/test_influence.py",
+      "program": "${workspaceFolder}/IF/mlp_influence.py",
       "console": "integratedTerminal",
       "justMyCode": true
     },

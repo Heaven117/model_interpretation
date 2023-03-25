@@ -107,7 +107,7 @@ def prediction():
         model_correct = 1
         if predicted != ground_truth:
             model_correct = 0
-        category = "NA";
+        category = "NA"
         if (predicted, model_correct) == (0,0):
             category = "FN"
         elif (predicted, model_correct) == (0,1):
