@@ -196,3 +196,4 @@ adult_oneHot_names = ['age', 'educational-num', 'hours-per-week', 'workclass_Gov
                       'marital-status_Separated', 'marital-status_Single', 'marital-status_Widowed', 'occupation_Blue-Collar', 
                       'occupation_Other/Unknown', 'occupation_Professional', 'occupation_Sales', 'occupation_Service', 'occupation_White-Collar', 
                       'race_Amer-Indian-Eskimo', 'race_Asian-Pac-Islander', 'race_Black', 'race_Other', 'race_White', 'gender_Female', 'gender_Male', 'income']
+adult_process_names = ['age', 'educational-num', 'hours-per-week', 'workclass', 'marital-status', 'occupation', 'race', 'gender']

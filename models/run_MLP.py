@@ -40,6 +40,14 @@ class MLP(nn.Module) :
         out = self.forward(x)
         _, pred = torch.max(out,dim = 1)
         return pred.numpy()
+    
+    def predict_encode(self,x,encoder):
+        x = encodeData(x,encoder)
+        # print(x.shape)
+        x = torch.from_numpy(x)
+        out = self.forward(x)
+        _, pred = torch.max(out,dim = 1)
+        return pred.numpy()
 
 
 def train_MLP(train_loader,test_loader):
@@ -73,6 +81,7 @@ def train_MLP(train_loader,test_loader):
             train_acc += acc
 
             display_progress(f"train. MLP model : ", test_id_num, len(train_loader))
+            test_id_num +=1
 
             
         print(f'epoch : {epoch + 1}, train_loss : {train_loss / len(train_loader.dataset)}, train_acc : {train_acc / len(train_loader)}')

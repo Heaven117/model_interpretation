@@ -19,7 +19,7 @@ def parse_args():
     
     parser.add_argument('--batch_size', type=int, default=1,
                         help='batch size.')
-    parser.add_argument('--epoch', type=int, default=100,
+    parser.add_argument('--epoch', type=int, default=1,
                         help='Number of epoch.')
     parser.add_argument('--regs', type=int, default=10,
                         help='Regularization for influence.')

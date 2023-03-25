@@ -8,7 +8,8 @@ from utils.parser import *
 from utils.helper import *
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
-from sklearn import preprocessing  
+from sklearn.preprocessing import OneHotEncoder ,normalize,LabelEncoder
+import copy
 
 
 args = parse_args()
@@ -55,38 +56,91 @@ def load_adult_income_dataset():
     adult_data = adult_data.replace({'marital-status': {'Married-civ-spouse': 'Married', 'Married-AF-spouse': 'Married',
                                                             'Married-spouse-absent': 'Married', 'Never-married': 'Single'}})
     adult_data = adult_data.replace({'income': {'<=50K': 0, '>50K': 1}})
-
-    return adult_data
-
-def one_hot(adult_data):
-    # 数据集处理
-    df_object_col = [col for col in adult_data.columns if adult_data[col].dtype.name == 'object']
-    df_int_col = [col for col in adult_data.columns if adult_data[col].dtype.name != 'object' and col != 'income']
     target = adult_data["income"]
-    dataset = pd.concat([adult_data[df_int_col], pd.get_dummies(adult_data[df_object_col])], axis = 1)
+    adult_data.drop('income', axis = 1, inplace = True)
+
+    # adult_data.to_csv(args.data_path+ 'final_adult.csv',index_label='id')
     
-    return dataset,target
+
+    df_object_col = [col for col in adult_data.columns if adult_data[col].dtype.name == 'object'] # 3个
+    df_int_col = [col for col in adult_data.columns if adult_data[col].dtype.name != 'object']
+
+    # adult_data[df_object_col] = adult_data[df_object_col].apply(lambda x : lencode(x))
+    
+    adult_data = pd.concat([adult_data[df_int_col], adult_data[df_object_col]], axis = 1).values
+
+    adult_data = Labelencoder(adult_data)
+    adult_data = np.array(adult_data, dtype = np.float32)
+
+    encoder = OneHotEncoder()
+    encoder.fit(adult_data[:,3:])
+
+    return adult_data,target.values,encoder
+
+def Labelencoder(x_data):
+    dataset = copy.deepcopy(x_data[:,0:3])
+    encoder = LabelEncoder()
+
+    object_col = x_data[:,3:]
+    rows,cols = object_col.shape
+    for c in range(cols):
+        tmp = encoder.fit_transform(object_col[:,c].ravel()).reshape(rows,1)
+        dataset = np.concatenate((dataset,tmp),axis = 1)
+    return dataset
+
+
+def encodeData(x_data,encoder):
+    dataset = copy.deepcopy(x_data[:,:3])
+    tmp = encoder.transform(x_data[:,3:]).toarray()
+    dataset = np.concatenate((dataset,tmp),axis = 1)
+
+    dataset = np.array(dataset, dtype = np.float32)
+
+    return dataset
+
+def encoder(x_data):
+    dataset = copy.deepcopy(x_data[:,0:3])
+    encoder = OneHotEncoder()
+
+    # one-hot处理
+    object_col = x_data[:,3:]
+    rows,cols = object_col.shape
+    for c in range(cols):
+        tmp = encoder.fit_transform(object_col[:,c].reshape(rows,1)).toarray() 
+        dataset = np.concatenate((dataset,tmp),axis = 1)
+
+    # df_object_col = [col for col in x_data.columns if x_data[col].dtype.name == 'object']
+    # df_int_col = [col for col in x_data.columns if x_data[col].dtype.name != 'object']
+    # dataset = pd.concat([x_data[df_int_col], pd.get_dummies(x_data[df_object_col])], axis = 1)
+    # tmp = encoder.fit_transform(x_data[:,3].reshape(rows,1)).toarray() 
+    # new_data = np.concatenate((new_data,tmp),axis = 1)
+
+    # 归一化
+    # dataset = dataset.apply(lambda x : (x - x.mean()) / x.std())
+    dataset = normalize(dataset,axis = 0,norm = 'max')
+    dataset = np.array(dataset, dtype = np.float32)
+    return dataset
+
 
 class Adult_data(Dataset) :
     def __init__(self,mode,tensor = True) :
         super(Adult_data, self).__init__()
         self.mode = mode
-        adult_data = load_adult_income_dataset()
-        dataset,target= one_hot(adult_data)
+        x_dataset,target,encoder = load_adult_income_dataset()
+        target = np.array(target)
+
+        x_dataset = encodeData(x_dataset,encoder)
+
+
          # 划分数据集
-        train_dataset, test_dataset, y_train, y_test = train_test_split(dataset,
+        train_dataset, test_dataset, y_train, y_test = train_test_split(x_dataset,
                                                                         target,
                                                                         test_size=0.2,
                                                                         random_state=0,
                                                                         stratify=target)
         
-        # 进行独热编码对齐
-        # test_dataset = fix_columns(test_dataset, train_dataset.columns)
-        # 归一化
-        train_dataset = train_dataset.apply(lambda x : (x - x.mean()) / x.std())
-        test_dataset = test_dataset.apply(lambda x : (x - x.mean()) / x.std())
-        y_train, y_test = np.array(y_train), np.array(y_test)
-        train_dataset, test_dataset = np.array(train_dataset, dtype = np.float32), np.array(test_dataset, dtype = np.float32)
+        # train_dataset= encoder(train_dataset)
+        # test_dataset= encoder(test_dataset)
 
         if tensor:
             if mode == 'train' : 
@@ -113,8 +167,9 @@ class Adult_data(Dataset) :
     
 
 if __name__ == "__main__":
+    # load_adult_income_dataset()
     train_dataset = Adult_data(mode = 'train')
-    test_dataset = Adult_data(mode = 'test')
+    # test_dataset = Adult_data(mode = 'test')
 
-    train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle = True, drop_last = False)
-    test_loader = DataLoader(test_dataset, batch_size = args.batch_size, shuffle = False, drop_last = False)
+    # train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle = True, drop_last = False)
+    # test_loader = DataLoader(test_dataset, batch_size = args.batch_size, shuffle = False, drop_last = False)
