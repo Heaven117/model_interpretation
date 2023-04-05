@@ -18,7 +18,9 @@
       "request": "launch",
       "program": "${workspaceFolder}/models/run_MLP.py",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": true,
+      "cwd": "${fileDirname}",
+      "env": { "PYTHONPATH": "${workspaceFolder};${env:PYTHONPATH}" }
     },
     {
       "name": "Python: dice",

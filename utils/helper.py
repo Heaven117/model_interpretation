@@ -1,25 +1,34 @@
-import sys
 import json
-import logging
-import numpy as np
-from pathlib import Path
+import sys
 from datetime import datetime as dt
-import torch
+from pathlib import Path
+
+import numpy as np
+
 from utils.parser import *
+
 args = parse_args()
 
 #  adult_column_names from "https://archive.ics.uci.edu/ml/datasets/Adult"
 adult_column_names = ['age', 'workclass', 'fnlwgt', 'education', 'educational-num', 'marital-status', 'occupation',
-                    'relationship', 'race', 'gender', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country',
-                    'income']
+                      'relationship', 'race', 'gender', 'capital-gain', 'capital-loss', 'hours-per-week',
+                      'native-country',
+                      'income']
 adult_target_value = ['<=50K', '>50K']
 
-adult_oneHot_names = ['age', 'educational-num', 'hours-per-week', 'workclass_Government', 'workclass_Other/Unknown', 
-                      'workclass_Private', 'workclass_Self-Employed', 'marital-status_Divorced', 'marital-status_Married', 
-                      'marital-status_Separated', 'marital-status_Single', 'marital-status_Widowed', 'occupation_Blue-Collar', 
-                      'occupation_Other/Unknown', 'occupation_Professional', 'occupation_Sales', 'occupation_Service', 'occupation_White-Collar', 
-                      'race_Amer-Indian-Eskimo', 'race_Asian-Pac-Islander', 'race_Black', 'race_Other', 'race_White', 'gender_Female', 'gender_Male', 'income']
-adult_process_names = ['age', 'educational-num', 'hours-per-week', 'workclass', 'marital-status', 'occupation', 'race', 'gender']
+adult_oneHot_names = ['age', 'educational-num', 'hours-per-week', 'workclass_Government', 'workclass_Other/Unknown',
+                      'workclass_Private', 'workclass_Self-Employed', 'marital-status_Divorced',
+                      'marital-status_Married',
+                      'marital-status_Separated', 'marital-status_Single', 'marital-status_Widowed',
+                      'occupation_Blue-Collar',
+                      'occupation_Other/Unknown', 'occupation_Professional', 'occupation_Sales', 'occupation_Service',
+                      'occupation_White-Collar',
+                      'race_Amer-Indian-Eskimo', 'race_Asian-Pac-Islander', 'race_Black', 'race_Other', 'race_White',
+                      'gender_Female', 'gender_Male', 'income']
+adult_process_names = ['age', 'workclass', 'education', 'educational-num', 'marital-status',
+                       'occupation', 'relationship', 'race', 'gender', 'hours-per-week',
+                       'native-country']
+
 
 def save_json(json_obj, json_path, append_if_exists=False,
               overwrite_if_exists=False, unique_fn_if_exists=True):
@@ -48,13 +57,13 @@ def save_json(json_obj, json_path, append_if_exists=False,
         append_if_exists = False
         if json_path.exists():
             time = dt.now().strftime("%Y-%m-%d-%H-%M-%S")
-            json_path = json_path.parents[0] / f'{str(json_path.stem)}_{time}'\
+            json_path = json_path.parents[0] / f'{str(json_path.stem)}_{time}' \
                                                f'{str(json_path.suffix)}'
 
     if overwrite_if_exists:
         append_if_exists = False
         with open(json_path, 'w+') as fout:
-            json.dump(json_obj, fout, indent=2,cls=MyEncoder)
+            json.dump(json_obj, fout, indent=2, cls=MyEncoder)
         return
 
     if append_if_exists:
@@ -63,11 +72,12 @@ def save_json(json_obj, json_path, append_if_exists=False,
                 read_file = json.load(fin)
             read_file.update(json_obj)
             with open(json_path, 'w+') as fout:
-                json.dump(read_file, fout, indent=2,cls=MyEncoder)
+                json.dump(read_file, fout, indent=2, cls=MyEncoder)
             return
 
     with open(json_path, 'w+') as fout:
-        json.dump(json_obj, fout, indent=2,cls=MyEncoder)
+        json.dump(json_obj, fout, indent=2, cls=MyEncoder)
+
 
 def display_progress(text, current_step, last_step, enabled=True,
                      fix_zero_start=True):
@@ -106,7 +116,7 @@ def display_progress(text, current_step, last_step, enabled=True,
     bar = '=' * filled_len + '.' * (bar_len - filled_len)
 
     bar = f"{text}[{bar:s}] {current_step:d} / {last_step:d}"
-    if current_step <= last_step-1:
+    if current_step <= last_step - 1:
         # Erase to end of line and print
         sys.stdout.write("\033[K" + bar + "\r")
     else:
@@ -115,3 +125,25 @@ def display_progress(text, current_step, last_step, enabled=True,
     sys.stdout.flush()
 
 
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, bytes):
+            return str(obj, encoding='utf-8')
+        if isinstance(obj, int):
+            return int(obj)
+        elif isinstance(obj, float):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, object):
+            return obj
+        else:
+            return super(MyEncoder, self).default(obj)
+
+
+def toJson(data):
+    return json.dumps(data, cls=MyEncoder)
+
+
+def getFileName(prefix, suffix):
+    return f'{prefix}_{args.model_type}_epoch{args.epoch}.{suffix}'
