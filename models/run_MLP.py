@@ -117,8 +117,8 @@ def test_MLP(test_loader):
         loss = criterion(out, label)
 
         test_loss+= loss.item()
-        _, pred = torch.max(out, 1)
-        result.append([out[0][1].item(),pred.item()])
+        _, pred = torch.max(out, 0)
+        result.append([out[0].item(),(pred == label).item(),pred.item()])
         num_correct = (pred == label).sum().item()
         acc = num_correct / x.shape[0]
         test_acc += acc
@@ -126,13 +126,9 @@ def test_MLP(test_loader):
     print(f'test_loss : {test_loss / len(test_loader.dataset)}, test_acc : {test_acc / len(test_loader)}')
     # result = torch.cat(result, dim = 0).cpu().numpy()
 
-    df = pd.DataFrame(result,columns=['Percentage','Category'])
+    df = pd.DataFrame(result,columns=['percentage','category','prediction'])
     for i, res in enumerate(result) :
-        predicted = res[1]
-        ground_truth = test_loader.dataset[i][1].item()
-        model_correct = 1
-        if predicted != ground_truth:
-            model_correct = 0
+        out,model_correct,predicted= res
         category = "NA"
         if (predicted, model_correct) == (0,0):
             category = "FN"
@@ -144,16 +140,20 @@ def test_MLP(test_loader):
             category = "TP"
         df.iloc[i,1] = category
 
-    df.to_csv(args.predict_path+f'pred_data.csv',index='id',float_format='%.6f',index_label='id')
+    df.to_csv(args.predict_path+f'pred_data000.csv',index='id',float_format='%.6f',index_label='id')
     
             
 
-def load_model():
+def load_model(baseDir=None):
     best_model = MLP().to(device)
     ckpt = torch.load(args.model_path+f'MPL_{args.epoch}.pth', map_location='cpu')
     best_model.load_state_dict(ckpt)
     return best_model
 
+
+def predictAllData():
+    dataset_loader = Adult_data(mode = 'none')
+    test_MLP(dataset_loader)
 
 if __name__ == "__main__":
     train_dataset = Adult_data(mode = 'train')
@@ -162,7 +162,10 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle = True, drop_last = False)
     test_loader = DataLoader(test_dataset, batch_size = args.batch_size, shuffle = False, drop_last = False)
     # train_MLP(train_loader,test_loader)
-    test_MLP(test_loader)
+
+
+    # test_MLP(test_loader)
+    predictAllData()
 
 
     

@@ -9,22 +9,27 @@ from utils.helper import *
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder ,normalize,LabelEncoder,StandardScaler
+import sklearn
 import copy
 
 
 args = parse_args()
 int_col_len = -1
 
-def load_adult_income_dataset():
+def load_adult_income_dataset(baseDir=None):
     # 获取数据集
-    datafile=args.data_path + args.dataset + '.data'
-    # if(os.path.exists(datafile)):
-    adult_data = pd.read_csv(datafile, header = None, skipinitialspace=True,names = adult_column_names)
+    # datafile=baseDir+args.data_path + args.dataset + '.data'
+    # adult_data = pd.read_csv(datafile, header = None, skipinitialspace=True,names = adult_column_names)
+    # adult_data,target = data_process(adult_data)
 
-    adult_data,target = data_process(adult_data)
-    adult_data ,one_hot_encoder = data_encode_define(adult_data)
+    datafile=args.data_path + 'final_data.csv'
+    adult_data = pd.read_csv(datafile, header = 0)
+    adult_data.drop('id',axis=1,inplace = True)
+    target = adult_data['income']
+    target = np.array(target)
+    adult_data ,one_hot_encoder,categorical_names = data_encode_define(adult_data)
 
-    return adult_data,target,one_hot_encoder
+    return adult_data,target,one_hot_encoder,categorical_names
 
 def data_process(df) :
     df.replace("?", pd.NaT, inplace = True)
@@ -44,7 +49,6 @@ def data_process(df) :
 
     return  df,target
 
-
 def data_encode_define(dataset):
     df_object_col = [col for col in dataset.columns if dataset[col].dtype.name == 'object'] # 3个
     df_int_col = [col for col in dataset.columns if dataset[col].dtype.name != 'object'and col != 'income']
@@ -56,16 +60,23 @@ def data_encode_define(dataset):
     dataset = pd.concat([dataset[df_int_col],dataset[df_object_col]], axis = 1).values
     global int_col_len
     int_col_len = len(df_int_col)
-    dataset = Labelencoder(dataset,int_col_len)
-    dataset = np.array(dataset, dtype = np.float32)
 
+    # LabelEncoding(dataset,int_col_len)
+    categorical_names = {}
+    for feature in range(int_col_len,dataset.shape[1]):
+        le = sklearn.preprocessing.LabelEncoder()
+        le.fit(dataset[:, feature])
+        dataset[:, feature] = le.transform(dataset[:, feature])
+        categorical_names[feature] = le.classes_
+
+    dataset = np.array(dataset, dtype = np.float32)
     one_hot_encoder = OneHotEncoder()
     one_hot_encoder.fit(dataset[:,int_col_len:])
 
     dataset = np.array(dataset, dtype = np.float32)
-    return dataset,one_hot_encoder
+    return dataset,one_hot_encoder,categorical_names
 
-def Labelencoder(x_data,int_len):
+def LabelEncoding(x_data,int_len):
     dataset = copy.deepcopy(x_data[:,0:int_len])
     encoder = LabelEncoder()
 
@@ -104,9 +115,12 @@ class Adult_data(Dataset) :
             if mode == 'train' : 
                 self.target = torch.tensor(y_train)
                 self.dataset = torch.FloatTensor(train_dataset)
-            else :
+            elif mode == 'test':
                 self.target = torch.tensor(y_test)
                 self.dataset = torch.FloatTensor(test_dataset)
+            else:
+                self.target = torch.tensor(target)
+                self.dataset = torch.FloatTensor(x_dataset)
         else:
             if mode == 'train' : 
                 self.target = y_train

@@ -12,6 +12,8 @@ def parse_args():
                         help='Store model path.')
     parser.add_argument('--predict_path', nargs='?', default='out/predict/',
                         help='test model predict path.')
+    parser.add_argument('--out_dir', nargs='?', default='out/',
+                        help='test model predict path.')
     parser.add_argument('--log_dir', nargs='?', default='out/logs/',
                         help='logs path.')
     parser.add_argument('--pretrain', type=int, default=0,

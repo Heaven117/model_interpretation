@@ -48,9 +48,9 @@
       "name": "Python: anchor",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/Anchor/run_anchor2.py",
+      "program": "${workspaceFolder}/Anchor/run_anchor.py",
       "console": "integratedTerminal",
-      "justMyCode": false
+      "justMyCode": true
     }
   ]
 }
