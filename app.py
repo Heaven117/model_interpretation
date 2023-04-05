@@ -81,10 +81,9 @@ def getPredData():
     idx = -1
     idx = request.args.get('idx')
 
-    response = {}
-    response['total'] = len(pre_data)
+    response = {'total': len(pre_data)}
 
-    if idx != None:
+    if idx is not None:
         idx = int(idx)
         response['data'] = pre_data[idx]
         # response['data'] = pre_data.to_json(index = idx)
@@ -115,11 +114,7 @@ def getInstance():
         # anchors = anchorData[str(idx)]
         sample = getSingleSample(idx)
 
-        response = {}
-        response['id'] = idx
-        response['total'] = len(raw_data)
-        response['sample'] = sample
-        response['anchor'] = anchors
+        response = {'id': idx, 'total': len(raw_data), 'sample': sample, 'anchor': anchors}
         return toJson(response)
 
 
@@ -134,11 +129,7 @@ def getSimilarData():
     harmful = inData['harmful']
     helpful = inData['helpful']
 
-    response = {}
-    response['total'] = total
-    response['time'] = time
-    response['harmful'] = []
-    response['helpful'] = []
+    response = {'total': total, 'time': time, 'harmful': [], 'helpful': []}
     for i in range(len(harmful)):
         response['harmful'].append({
             'id': harmful[i],
@@ -157,8 +148,7 @@ def getDiceData():
     inData = diceData[str(idx)]
     cfs_list = inData['cfs_list']
 
-    response = {}
-    response['cfs_list'] = cfs_list
+    response = {'cfs_list': cfs_list}
     return toJson(inData)
 
 

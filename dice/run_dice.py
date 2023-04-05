@@ -1,19 +1,16 @@
-import os
-import sys
-
-sys.path.append(os.curdir)
-
 import json
+
 import dice_ml
-from utils.parser import *
-from utils.helper import save_json
-from models.run_MLP import load_model
+
 from models.data_process import load_adult_income_dataset
+from models.run_MLP import load_model
+from utils.helper import save_json, getFileName
+from utils.parser import *
 
 args = parse_args()
 device = args.device
 # 加载数据集
-dataset = load_adult_income_dataset()
+dataset = load_adult_income_dataset(False)
 d = dice_ml.Data(dataframe=dataset, continuous_features=['age', 'educational-num', 'hours-per-week'],
                  outcome_name='income')
 
@@ -25,7 +22,7 @@ exp = dice_ml.Dice(d, m, method="gradient")
 
 # 生成反事实解释
 dataset.drop('income', axis=1, inplace=True)
-query_instance = dataset[1:10]
+query_instance = dataset[1:20]
 dice_exp = exp.generate_counterfactuals(query_instance, total_CFs=4, desired_class="opposite")
 
 # imp = exp.local_feature_importance(query_instance, posthoc_sparsity_param=None)
@@ -33,7 +30,7 @@ dice_exp = exp.generate_counterfactuals(query_instance, total_CFs=4, desired_cla
 
 
 # 生成反事实list
-# dice_exp.visualize_as_dataframe(show_only_changes=True)
+dice_exp.visualize_as_dataframe(show_only_changes=True)
 dices = {}
 dices['total'] = len(dice_exp.cf_examples_list)
 if dice_exp.local_importance is not None:
@@ -49,5 +46,5 @@ for i in range(len(dice_exp.cf_examples_list)):
     dices[str(i)] = {}
     dices[str(i)]['cfs_list'] = serialized_cf_examples['final_cfs_list']
 
-save_json(dices, args.out_dir + getFileName('dice', 'json'))
+save_json(dices, args.out_dir + getFileName('dice', 'json'), overwrite_if_exists=True)
 # dice_exp.cf_examples_list[0].final_cfs_df.to_csv(path_or_buf='counterfactuals.csv', index=False)

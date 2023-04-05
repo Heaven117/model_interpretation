@@ -1,11 +1,10 @@
 import copy
 
-import numpy as np
 import pandas as pd
 import sklearn
 import torch
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder, normalize, LabelEncoder
+from sklearn.preprocessing import OneHotEncoder, normalize
 from torch.utils.data import Dataset
 
 from utils.helper import *
@@ -14,15 +13,24 @@ args = parse_args()
 int_col_len = -1
 
 
-def load_adult_income_dataset(baseDir=None):
+def load_adult_income_dataset(encode=True):
     datafile = args.data_path + 'final_data.csv'
     adult_data = pd.read_csv(datafile, header=0)
     adult_data.drop('id', axis=1, inplace=True)
     target = adult_data['income']
     target = np.array(target)
-    adult_data, one_hot_encoder, categorical_names = data_encode_define(adult_data)
+    df_object_col = [col for col in adult_data.columns if adult_data[col].dtype.name == 'object']  # 3个
+    df_int_col = [col for col in adult_data.columns if adult_data[col].dtype.name != 'object']
+    adult_data = pd.concat([adult_data[df_int_col], adult_data[df_object_col]], axis=1)
+    global int_col_len
+    int_col_len = len(df_int_col)
 
-    return adult_data, target, one_hot_encoder, categorical_names
+    if encode:
+        adult_data.drop('income', axis=1, inplace=True)
+        adult_data, one_hot_encoder, categorical_names = data_encode_define(adult_data.values)
+        return adult_data, target, one_hot_encoder, categorical_names
+    else:
+        return adult_data
 
 
 def data_process():
@@ -50,52 +58,22 @@ def data_process():
 
 
 def data_encode_define(dataset):
-    df_object_col = [col for col in dataset.columns if dataset[col].dtype.name == 'object']  # 3个
-    df_int_col = [col for col in dataset.columns if dataset[col].dtype.name != 'object' and col != 'income']
-
-    # 1.1原始ok编码
-    # dataset = pd.concat([dataset[df_int_col], pd.get_dummies(dataset[df_object_col])], axis = 1)
-
-    # 1.2适合Anchor的编码
-    dataset = pd.concat([dataset[df_int_col], dataset[df_object_col]], axis=1).values
-    global int_col_len
-    int_col_len = len(df_int_col)
-
-    # LabelEncoding(dataset,int_col_len)
     categorical_names = {}
     for feature in range(int_col_len, dataset.shape[1]):
         le = sklearn.preprocessing.LabelEncoder()
         le.fit(dataset[:, feature])
         dataset[:, feature] = le.transform(dataset[:, feature])
         categorical_names[feature] = le.classes_
-
-    dataset = np.array(dataset, dtype=np.float32)
     one_hot_encoder = OneHotEncoder()
     one_hot_encoder.fit(dataset[:, int_col_len:])
-
-    dataset = np.array(dataset, dtype=np.float32)
     return dataset, one_hot_encoder, categorical_names
-
-
-def LabelEncoding(x_data, int_len):
-    dataset = copy.deepcopy(x_data[:, 0:int_len])
-    encoder = LabelEncoder()
-
-    object_col = x_data[:, int_len:]
-    rows, cols = object_col.shape
-    for c in range(cols):
-        tmp = encoder.fit_transform(object_col[:, c].ravel()).reshape(rows, 1)
-        dataset = np.concatenate((dataset, tmp), axis=1)
-    return dataset
 
 
 def encoder_process(x_data, encoder):
     dataset = copy.deepcopy(x_data[:, :int_col_len])
     tmp = encoder.transform(x_data[:, int_col_len:]).toarray()
     dataset = np.concatenate((dataset, tmp), axis=1)
-
     dataset = np.array(dataset, dtype=np.float32)
-
     return dataset
 
 
