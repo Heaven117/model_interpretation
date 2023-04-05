@@ -3,9 +3,22 @@ import json
 import logging
 from pathlib import Path
 from datetime import datetime as dt
-
 import torch
+from utils.parser import *
+args = parse_args()
 
+#  adult_column_names from "https://archive.ics.uci.edu/ml/datasets/Adult"
+adult_column_names = ['age', 'workclass', 'fnlwgt', 'education', 'educational-num', 'marital-status', 'occupation',
+                    'relationship', 'race', 'gender', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country',
+                    'income']
+adult_target_value = ['<=50K', '>50K']
+
+adult_oneHot_names = ['age', 'educational-num', 'hours-per-week', 'workclass_Government', 'workclass_Other/Unknown', 
+                      'workclass_Private', 'workclass_Self-Employed', 'marital-status_Divorced', 'marital-status_Married', 
+                      'marital-status_Separated', 'marital-status_Single', 'marital-status_Widowed', 'occupation_Blue-Collar', 
+                      'occupation_Other/Unknown', 'occupation_Professional', 'occupation_Sales', 'occupation_Service', 'occupation_White-Collar', 
+                      'race_Amer-Indian-Eskimo', 'race_Asian-Pac-Islander', 'race_Black', 'race_Other', 'race_White', 'gender_Female', 'gender_Male', 'income']
+adult_process_names = ['age', 'educational-num', 'hours-per-week', 'workclass', 'marital-status', 'occupation', 'race', 'gender']
 
 def save_json(json_obj, json_path, append_if_exists=False,
               overwrite_if_exists=False, unique_fn_if_exists=True):
@@ -55,7 +68,6 @@ def save_json(json_obj, json_path, append_if_exists=False,
     with open(json_path, 'w+') as fout:
         json.dump(json_obj, fout, indent=2)
 
-
 def display_progress(text, current_step, last_step, enabled=True,
                      fix_zero_start=True):
     """Draws a progress indicator on the screen with the text preceeding the
@@ -102,98 +114,3 @@ def display_progress(text, current_step, last_step, enabled=True,
     sys.stdout.flush()
 
 
-def init_logging(filename=None):
-    """Initialises log/stdout output
-
-    Arguments:
-        filename: str, a filename can be set to output the log information to
-            a file instead of stdout"""
-    log_lvl = logging.INFO
-    log_format = '%(asctime)s: %(message)s'
-    if filename:
-        logging.basicConfig(handlers=[logging.FileHandler(filename),
-                                      logging.StreamHandler(sys.stdout)],
-                            level=log_lvl,
-                            format=log_format)
-    else:
-        logging.basicConfig(stream=sys.stdout, level=log_lvl,
-                            format=log_format)
-
-"""Returns a default config file"""
-# def get_default_config():
-#     model_config = {
-#         'mode_name':'svm',
-#         'dataset': 'FICO',
-#         'device' : torch.device('cpu'),
-#         'seed': 42,
-#         'epoch' : 100,
-#         'batch_size' : 5,
-#         'lr' : 0.001,
-#         'c' : 0.01,
-#         'dataFile':'data/FICO_final_data.csv'
-#     }
-#     save_path='data/svm/'+f"svm_{model_config['dataset']}_{model_config['epoch']}.pth"
-#     model_config['save_path'] = save_path
-
-#     IF_config ={
-#         'out_path': 'data/influence',
-#         'recursion_depth': 10,
-        
-#     }
-
-#     return model_config,IF_config
-model_config = {
-    'mode_name':'svm',
-    'dataset': 'adult',
-    'device' : torch.device('cpu'),
-    'seed': 42,
-    'epoch' : 100,
-    'batch_size' : 1,
-    'lr' : 0.001,
-    'c' : 0.01,
-    'dataFile':'data/adult.data'
-}
-save_path='data/svm/'+f"svm_{model_config['dataset']}_{model_config['epoch']}.pth"
-
-IF_config ={
-    'out_path': 'data/influence',
-    'recursion_depth': 10,
-}
-
-target_name = 'RiskPerformance'
-ft_names = ["External Risk Estimate", 
-            "Months Since Oldest Trade Open",
-            "Months Since Last Trade Open",
-            "Average Months in File",
-            "Satisfactory Trades",
-            "Trades 60+ Ever",
-            "Trades 90+ Ever",
-            "% Trades Never Delq.",
-            "Months Since Last Delq.",
-            "Max Delq. Last 12M",
-            "Max Delq. Ever",
-            "Total Trades",
-            "Trades Open Last 12M",
-            "% Installment Trades",
-            "Months Since Most Recent Inq",
-            "Inq Last 6 Months",
-            "Inq Last 6 Months exl. 7 days",
-            "Revolving Burden",
-            "Installment Burden",
-            "Revolving Trades w/ Balance:",
-            "Installment Trades w/ Balance",
-            "Bank Trades w/ High Utilization Ratio",
-            "% Trades w/ Balance"]
-
-#  adult_column_names from "https://archive.ics.uci.edu/ml/datasets/Adult"
-adult_column_names = ['age', 'workclass', 'fnlwgt', 'education', 'educational-num', 'marital-status', 'occupation',
-                    'relationship', 'race', 'gender', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country',
-                    'income']
-adult_target_value = ['<=50K', '>50K']
-
-adult_oneHot_names = ['age', 'educational-num', 'hours-per-week', 'workclass_Government', 'workclass_Other/Unknown', 
-                      'workclass_Private', 'workclass_Self-Employed', 'marital-status_Divorced', 'marital-status_Married', 
-                      'marital-status_Separated', 'marital-status_Single', 'marital-status_Widowed', 'occupation_Blue-Collar', 
-                      'occupation_Other/Unknown', 'occupation_Professional', 'occupation_Sales', 'occupation_Service', 'occupation_White-Collar', 
-                      'race_Amer-Indian-Eskimo', 'race_Asian-Pac-Islander', 'race_Black', 'race_Other', 'race_White', 'gender_Female', 'gender_Male', 'income']
-adult_process_names = ['age', 'educational-num', 'hours-per-week', 'workclass', 'marital-status', 'occupation', 'race', 'gender']

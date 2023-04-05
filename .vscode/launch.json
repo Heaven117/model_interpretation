@@ -21,12 +21,12 @@
       "justMyCode": true
     },
     {
-      "name": "Python: factual",
+      "name": "Python: dice",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/counterfactual/run_factual.py",
+      "program": "${workspaceFolder}/dice/run_factual.py",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": false
     },
     {
       "name": "Python: train",

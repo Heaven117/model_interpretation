@@ -8,18 +8,16 @@ def parse_args():
                         help='Choose a dataset from {adult, FICO}')
     parser.add_argument('--data_path', nargs='?', default='data/',
                         help='Input data path.')
-    parser.add_argument('--model_path', nargs='?', default='out/weights/',
+    parser.add_argument('--model_path', nargs='?', default='data/out/weights/',
                         help='Store model path.')
-    parser.add_argument('--predict_path', nargs='?', default='out/predict/',
-                        help='test model predict path.')
-    parser.add_argument('--log_dir', nargs='?', default='out/logs/',
-                        help='logs path.')
+    parser.add_argument('--out_dir', nargs='?', default='data/out/',
+                        help='out path.')
     parser.add_argument('--pretrain', type=int, default=0,
                         help='0: No pretrain, 1:Pretrain with stored models.')
     
     parser.add_argument('--batch_size', type=int, default=1,
                         help='batch size.')
-    parser.add_argument('--epoch', type=int, default=1,
+    parser.add_argument('--epoch', type=int, default=100,
                         help='Number of epoch.')
     parser.add_argument('--regs', type=int, default=10,
                         help='Regularization for influence.')

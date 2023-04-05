@@ -1,0 +1,4 @@
+age,workclass,educational-num,marital-status,occupation,race,gender,hours-per-week,income
+50.0,Self-Employed,13.0,Married,Other/Unknown,Asian-Pac-Islander,Female,11.0,0.533
+68.0,Private,13.0,Widowed,Service,Amer-Indian-Eskimo,Male,18.0,0.539
+50.0,Private,11.0,Single,Sales,Amer-Indian-Eskimo,Male,11.0,0.551

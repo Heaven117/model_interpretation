@@ -51,7 +51,7 @@ class MLP(nn.Module) :
 
 
 def train_MLP(train_loader,test_loader):
-    # writer = SummaryWriter(log_dir = args.log_dir)
+    # writer = SummaryWriter(out_dir = args.out_dir)
     os.makedirs(args.model_path,exist_ok=True)
 
 
@@ -108,8 +108,8 @@ def train_MLP(train_loader,test_loader):
 
 
 def test_MLP(test_loader):
-    # writer = SummaryWriter(log_dir = args.log_dir)
-    os.makedirs(args.predict_path,exist_ok=True)
+    # writer = SummaryWriter(out_dir = args.out_dir)
+    os.makedirs(args.out_dir,exist_ok=True)
 
     best_model = MLP().to(device)
     criterion = nn.CrossEntropyLoss()
@@ -135,7 +135,7 @@ def test_MLP(test_loader):
     print(f'test_loss : {test_loss / len(test_loader.dataset)}, test_acc : {test_acc / len(test_loader)}')
     result = torch.cat(result, dim = 0).cpu().numpy()
 
-    # with open(args.predict_path+f'MPL_{args.epoch}_pred.csv', 'w', newline = '') as file :
+    # with open(args.out_dir+f'MPL_{args.epoch}_pred.csv', 'w', newline = '') as file :
     #     writer = csv.writer(file)
     #     writer.writerow(['id', 'label','pred_result'])
     #     for i, pred in enumerate(result) :

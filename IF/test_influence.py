@@ -117,8 +117,7 @@ def calc_influence_single(model, train_loader, test_loader,test_id_num, recursio
 
 # 计算所有test data的影响
 def calc_main(config, model,train_loader,test_loader,start=0):
-    outdir = Path(args.predict_path)
-
+    outdir = Path(args.out_dir)
     # todo test设置1
     test_dataset_iter_len = 10
     # test_dataset_iter_len = len(test_loader.dataset)
@@ -142,7 +141,7 @@ def calc_main(config, model,train_loader,test_loader,start=0):
             save_json(influences, influences_path,overwrite_if_exists=True)
             last = i
 
-    influences_path = outdir.joinpath(f"influence_{args.model_type}_{args.epoch}-{i}.json")
+    influences_path = args.out_dir.joinpath(f"influence_{args.model_type}_{args.epoch}-{i}.json")
     save_json(influences, influences_path,overwrite_if_exists=True)
 
 
