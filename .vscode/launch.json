@@ -40,7 +40,7 @@
       "name": "Python: influence",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/IF/test_influence.py",
+      "program": "${workspaceFolder}/IF/mlp_influence.py",
       "console": "integratedTerminal",
       "justMyCode": true
     },
@@ -48,9 +48,9 @@
       "name": "Python: anchor",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/Anchor/run_anchor2.py",
+      "program": "${workspaceFolder}/Anchor/run_anchor.py",
       "console": "integratedTerminal",
-      "justMyCode": false
+      "justMyCode": true
     }
   ]
 }

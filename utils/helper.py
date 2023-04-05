@@ -1,6 +1,7 @@
 import sys
 import json
 import logging
+import numpy as np
 from pathlib import Path
 from datetime import datetime as dt
 import torch
@@ -53,7 +54,7 @@ def save_json(json_obj, json_path, append_if_exists=False,
     if overwrite_if_exists:
         append_if_exists = False
         with open(json_path, 'w+') as fout:
-            json.dump(json_obj, fout, indent=2)
+            json.dump(json_obj, fout, indent=2,cls=MyEncoder)
         return
 
     if append_if_exists:
@@ -62,11 +63,11 @@ def save_json(json_obj, json_path, append_if_exists=False,
                 read_file = json.load(fin)
             read_file.update(json_obj)
             with open(json_path, 'w+') as fout:
-                json.dump(read_file, fout, indent=2)
+                json.dump(read_file, fout, indent=2,cls=MyEncoder)
             return
 
     with open(json_path, 'w+') as fout:
-        json.dump(json_obj, fout, indent=2)
+        json.dump(json_obj, fout, indent=2,cls=MyEncoder)
 
 def display_progress(text, current_step, last_step, enabled=True,
                      fix_zero_start=True):

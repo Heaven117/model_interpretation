@@ -15,35 +15,28 @@ from models.data_process import *
 
 args = parse_args()
 device = args.device
-# device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
-
 
 class MLP(nn.Module) :
     def __init__(self) :
         super(MLP, self).__init__()
-        self.net = nn.Sequential(nn.Linear(25, 12), 
+        self.net = nn.Sequential(nn.Linear(102, 64), 
                                 nn.ReLU(), 
-                                nn.Linear(12, 2)
+                                nn.Linear(64, 32), 
+                                nn.ReLU(),
+                                nn.Linear(32, 2)
                                 )
     def forward(self, x) :
         out = self.net(x) 
-#         print(out)
-        return F.softmax(out,dim = 0)
+        return F.softmax(out)
     
     def predict_single(self,x):
         out = self.forward(x)
         _, pred = torch.max(out,dim = 0)
         return pred.item()
     
-    def predict_detach(self,x):
-        x = torch.from_numpy(x)
-        out = self.forward(x)
-        _, pred = torch.max(out,dim = 1)
-        return pred.numpy()
-    
-    def predict_encode(self,x,encoder):
-        x = encodeData(x,encoder)
-        # print(x.shape)
+    def predict_anchor(self,x,encoder):
+        x = encoder_process(x,encoder)
+        x = normalize(x,axis = 0,norm = 'max')
         x = torch.from_numpy(x)
         out = self.forward(x)
         _, pred = torch.max(out,dim = 1)
@@ -105,8 +98,6 @@ def train_MLP(train_loader,test_loader):
         #     torch.save(model.state_dict(), args.model_path+f'MPL_{args.epoch}.pth')
     torch.save(model.state_dict(), args.model_path+f'MPL_{args.epoch}.pth')
 
-
-
 def test_MLP(test_loader):
     # writer = SummaryWriter(out_dir = args.out_dir)
     os.makedirs(args.out_dir,exist_ok=True)
@@ -126,28 +117,43 @@ def test_MLP(test_loader):
         loss = criterion(out, label)
 
         test_loss+= loss.item()
-        _, pred = torch.max(out, 1)
-        result.append(pred.detach())
+        _, pred = torch.max(out, 0)
+        result.append([out[0].item(),(pred == label).item(),pred.item()])
         num_correct = (pred == label).sum().item()
         acc = num_correct / x.shape[0]
         test_acc += acc
     
     print(f'test_loss : {test_loss / len(test_loader.dataset)}, test_acc : {test_acc / len(test_loader)}')
-    result = torch.cat(result, dim = 0).cpu().numpy()
+    # result = torch.cat(result, dim = 0).cpu().numpy()
 
-    # with open(args.out_dir+f'MPL_{args.epoch}_pred.csv', 'w', newline = '') as file :
-    #     writer = csv.writer(file)
-    #     writer.writerow(['id', 'label','pred_result'])
-    #     for i, pred in enumerate(result) :
-    #         writer.writerow([i, test_loader.dataset[i][1].item() ,pred])
+    df = pd.DataFrame(result,columns=['percentage','category','prediction'])
+    for i, res in enumerate(result) :
+        out,model_correct,predicted= res
+        category = "NA"
+        if (predicted, model_correct) == (0,0):
+            category = "FN"
+        elif (predicted, model_correct) == (0,1):
+            category = "TN"
+        elif (predicted, model_correct) == (1,0):
+            category = "FP"
+        elif (predicted, model_correct) == (1,1):
+            category = "TP"
+        df.iloc[i,1] = category
 
+    df.to_csv(args.predict_path+f'pred_data000.csv',index='id',float_format='%.6f',index_label='id')
+    
+            
 
-def load_model():
+def load_model(baseDir=None):
     best_model = MLP().to(device)
     ckpt = torch.load(args.model_path+f'MPL_{args.epoch}.pth', map_location='cpu')
     best_model.load_state_dict(ckpt)
     return best_model
 
+
+def predictAllData():
+    dataset_loader = Adult_data(mode = 'none')
+    test_MLP(dataset_loader)
 
 if __name__ == "__main__":
     train_dataset = Adult_data(mode = 'train')
@@ -155,8 +161,11 @@ if __name__ == "__main__":
 
     train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle = True, drop_last = False)
     test_loader = DataLoader(test_dataset, batch_size = args.batch_size, shuffle = False, drop_last = False)
-    train_MLP(train_loader,test_loader)
-    test_MLP(test_loader)
+    # train_MLP(train_loader,test_loader)
+
+
+    # test_MLP(test_loader)
+    predictAllData()
 
 
     
