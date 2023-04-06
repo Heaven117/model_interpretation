@@ -79,7 +79,10 @@ app = Flask(__name__)
 @app.route('/getPredData')
 def getPredData():
     idx = -1
-    idx = request.args.get('idx')
+    try:
+        idx = request.args.get('idx')
+    except:
+        return f"Please enter a sample number."
 
     response = {'total': len(pre_data)}
 
@@ -121,7 +124,11 @@ def getInstance():
 # 获取相似数据-影响训练点
 @app.route('/getSimilarData')
 def getSimilarData():
-    idx = request.args['params']
+    try:
+        idx = request.args.get('params')
+    except:
+        return f"Please enter a sample number."
+    # idx = request.args['params']
     total = influenceData['total']
     inData = influenceData[str(idx)]
     time = inData['time_calc_influence_s']
@@ -144,7 +151,11 @@ def getSimilarData():
 
 @app.route('/getDiceData')
 def getDiceData():
-    idx = request.args['params']
+    try:
+        idx = request.args.get('params')
+    except:
+        return f"Please enter a sample number."
+    
     inData = diceData[str(idx)]
     cfs_list = inData['cfs_list']
 

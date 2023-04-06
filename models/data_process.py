@@ -64,6 +64,7 @@ def data_encode_define(dataset):
         le.fit(dataset[:, feature])
         dataset[:, feature] = le.transform(dataset[:, feature])
         categorical_names[feature] = le.classes_
+    dataset = np.array(dataset, dtype=np.float32)
     one_hot_encoder = OneHotEncoder()
     one_hot_encoder.fit(dataset[:, int_col_len:])
     return dataset, one_hot_encoder, categorical_names

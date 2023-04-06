@@ -20,10 +20,23 @@ m = dice_ml.Model(model=model, backend='PYT', func="ohe-min-max")
 # 实例化 DiCE 类
 exp = dice_ml.Dice(d, m, method="gradient")
 
+# get MAD
+mads = d.get_mads(normalized=True)
+
+# create feature weights
+feature_weights = {}
+# for feature in mads:
+#     feature_weights[feature] = round(1 / mads[feature], 2)
+# print(feature_weights)
+features_to_vary = ['age', 'workclass', 'education', 'educational-num', 'marital-status',
+                    'occupation', 'relationship', 'hours-per-week']
+
 # 生成反事实解释
 dataset.drop('income', axis=1, inplace=True)
 query_instance = dataset[1:20]
-dice_exp = exp.generate_counterfactuals(query_instance, total_CFs=4, desired_class="opposite")
+dice_exp = exp.generate_counterfactuals(query_instance, total_CFs=10, desired_class="opposite", proximity_weight=1.5,
+                                        diversity_weight=1.0, feature_weights=feature_weights,
+                                        features_to_vary=features_to_vary)
 
 # imp = exp.local_feature_importance(query_instance, posthoc_sparsity_param=None)
 # print(imp.local_importance)
