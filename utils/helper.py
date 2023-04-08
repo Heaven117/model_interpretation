@@ -25,9 +25,13 @@ adult_oneHot_names = ['age', 'educational-num', 'hours-per-week', 'workclass_Gov
                       'occupation_White-Collar',
                       'race_Amer-Indian-Eskimo', 'race_Asian-Pac-Islander', 'race_Black', 'race_Other', 'race_White',
                       'gender_Female', 'gender_Male', 'income']
-adult_process_names = ['age', 'workclass', 'education', 'educational-num', 'marital-status',
-                       'occupation', 'relationship', 'race', 'gender', 'hours-per-week',
-                       'native-country']
+# adult_process_names = ['age', 'workclass', 'education', 'educational-num', 'marital-status',
+#                        'occupation', 'relationship', 'race', 'gender', 'hours-per-week',
+#                        'native-country']
+continuous_features = ['age', 'educational-num', 'hours-per-week']
+adult_process_names = ['age', 'educational-num', 'hours-per-week', 'workclass',
+                       'education', 'marital-status', 'occupation', 'relationship', 'race',
+                       'gender', 'native-country']
 
 
 def save_json(json_obj, json_path, append_if_exists=False,
@@ -136,7 +140,7 @@ class MyEncoder(json.JSONEncoder):
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
         elif isinstance(obj, object):
-            return obj
+            return obj.tolist()
         else:
             return super(MyEncoder, self).default(obj)
 

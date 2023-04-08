@@ -1,5 +1,7 @@
+import sys
 import warnings
 
+sys.path.append('./')
 from anchor.anchor_tabular import *
 from models.data_process import *
 from models.run_MLP import load_model
@@ -12,7 +14,7 @@ device = args.device
 def find_anchor(dataset, explainer, predict_fn):
     anchors = {}
     # dataset_len = len(dataset)
-    dataset_len = 10
+    dataset_len = 1
     anchors['total'] = dataset_len
     for sample_id in range(dataset_len):
         x_test = dataset[sample_id]
@@ -22,7 +24,7 @@ def find_anchor(dataset, explainer, predict_fn):
         anchors[sample_id] = {}
         anchors[sample_id]['feature'] = exp_map['names']
         anchors[sample_id]['precision'] = exp_map['precision']
-        anchors[sample_id]['examples'] = exp_map['examples']
+        anchors[sample_id]['examples'] = exp_map['examples']  # 自己做数据处理
 
         # 打印示例
         # print('labelNames',explainer.class_names)
@@ -33,18 +35,14 @@ def find_anchor(dataset, explainer, predict_fn):
 
     outdir = Path(args.out_dir)
     outdir.mkdir(exist_ok=True, parents=True)
-    save_json(anchors, outdir + getFileName('anchors', 'json'), overwrite_if_exists=True)
+    save_json(anchors, outdir.joinpath(getFileName('anchors111', 'json')), overwrite_if_exists=True)
 
 
 if __name__ == "__main__":
     model = load_model()
     x_dataset, target, encoder, categorical_names = load_adult_income_dataset()
-    # train_dataset, test_dataset, y_train, y_test = train_test_split(x_dataset,
-    #                                                             target,
-    #                                                             test_size=0.2,
-    #                                                             random_state=0,
-    #                                                             stratify=target)
 
+    adult_process_names.insert(0, 'id')
     explainer = AnchorTabularExplainer(adult_target_value, adult_process_names, x_dataset,
                                        categorical_names=categorical_names)
     predict_fn = lambda x: model.predict_anchor(x, encoder)

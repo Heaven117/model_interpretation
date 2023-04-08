@@ -1,18 +1,20 @@
 """Base anchor functions"""
 from __future__ import print_function
-import numpy as np
-import operator
-import copy
-import sklearn
+
 import collections
+import copy
+
+import numpy as np
 
 
 def matrix_subset(matrix, n_samples):
-    # if matrix.shape[0] == 0:
-    #     return matrix
-    # n_samples = min(matrix.shape[0], n_samples)
-    # return matrix[np.random.choice(matrix.shape[0], n_samples, replace=False)]
+    if matrix.shape[0] == 0:
+        return matrix
+    n_samples = min(matrix.shape[0], n_samples)
+    return matrix[np.random.choice(matrix.shape[0], n_samples, replace=False)]
 
+
+def matrix_subset2(matrix, n_samples):
     matrix_len = len(matrix)
     if matrix_len == 0:
         return matrix
@@ -36,7 +38,7 @@ class AnchorBaseBeam(object):
         lm = p
         um = min(min(1, p + np.sqrt(level / 2.)), 1)
         qm = (um + lm) / 2.
-#         print 'lm', lm, 'qm', qm, kl_bernoulli(p, qm)
+        #         print 'lm', lm, 'qm', qm, kl_bernoulli(p, qm)
         if AnchorBaseBeam.kl_bernoulli(p, qm) > level:
             um = qm
         else:
@@ -48,7 +50,7 @@ class AnchorBaseBeam(object):
         um = p
         lm = max(min(1, p - np.sqrt(level / 2.)), 0)
         qm = (um + lm) / 2.
-#         print 'lm', lm, 'qm', qm, kl_bernoulli(p, qm)
+        #         print 'lm', lm, 'qm', qm, kl_bernoulli(p, qm)
         if AnchorBaseBeam.kl_bernoulli(p, qm) > level:
             lm = qm
         else:
@@ -93,6 +95,7 @@ class AnchorBaseBeam(object):
             ut = not_J[np.argmax(ub[not_J])]
             lt = J[np.argmin(lb[J])]
             return ut, lt
+
         ut, lt = update_bounds(t)
         B = ub[ut] - lb[lt]
         verbose_count = 0
@@ -126,7 +129,7 @@ class AnchorBaseBeam(object):
         data = state['data'][:current_idx]
         labels = state['labels'][:current_idx]
         if len(previous_best) == 0:
-            tuples = [(x, ) for x in all_features]
+            tuples = [(x,) for x in all_features]
             for x in tuples:
                 pres = data[:, x[0]].nonzero()[0]
                 # NEW
@@ -138,13 +141,13 @@ class AnchorBaseBeam(object):
                 state['t_coverage_idx'][x] = set(
                     coverage_data[:, x[0]].nonzero()[0])
                 state['t_coverage'][x] = (
-                    float(len(state['t_coverage_idx'][x])) /
-                    coverage_data.shape[0])
+                        float(len(state['t_coverage_idx'][x])) /
+                        coverage_data.shape[0])
             return tuples
         new_tuples = set()
         for f in all_features:
             for t in previous_best:
-                new_t = normalize_tuple(t + (f, ))
+                new_t = normalize_tuple(t + (f,))
                 if len(new_t) != len(t) + 1:
                     continue
                 if new_t not in new_tuples:
@@ -155,8 +158,8 @@ class AnchorBaseBeam(object):
                         state['t_coverage_idx'][t].intersection(
                             state['t_coverage_idx'][(f,)]))
                     state['t_coverage'][new_t] = (
-                        float(len(state['t_coverage_idx'][new_t])) /
-                        coverage_data.shape[0])
+                            float(len(state['t_coverage_idx'][new_t])) /
+                            coverage_data.shape[0])
                     t_idx = np.array(list(state['t_idx'][t]))
                     t_data = state['data'][t_idx]
                     present = np.where(t_data[:, f] == 1)[0]
@@ -171,6 +174,7 @@ class AnchorBaseBeam(object):
     def get_sample_fns(sample_fn, tuples, state):
         # each sample fn returns number of positives
         sample_fns = []
+
         def complete_sample_fn(t, n):
             raw_data, data, labels = sample_fn(list(t), n)
             current_idx = state['current_idx']
@@ -209,10 +213,10 @@ class AnchorBaseBeam(object):
             # state['raw_data'] = np.vstack((state['raw_data'], raw_data))
             # state['labels'] = np.hstack((state['labels'], labels))
             return labels.sum()
+
         for t in tuples:
             sample_fns.append(lambda n, t=t: complete_sample_fn(t, n))
         return sample_fns
-
 
     @staticmethod
     def get_initial_statistics(tuples, state):
@@ -240,23 +244,25 @@ class AnchorBaseBeam(object):
                     state['t_nsamples'][current_t])
             anchor['feature'].append(f)
             anchor['mean'].append(mean)
-            anchor['precision'].append(mean)
+            # anchor['precision'].append(mean)
             anchor['coverage'].append(state['t_coverage'][current_t])
             raw_idx = list(state['t_idx'][current_t])
             raw_data = state['raw_data'][raw_idx]
             covered_true = (state['raw_data'][raw_idx][state['labels'][raw_idx] == 1])
             covered_false = (state['raw_data'][raw_idx][state['labels'][raw_idx] == 0])
-            covered_true_idx = [i for i in raw_idx if state['labels'][i] == 1]
-            covered_false_idx = [i for i in raw_idx if state['labels'][i] == 0]
-            
+            # covered_false_idx = covered_true[:][0]
+            # covered_true_idx = covered_false[:][0]
+            # covered_true_idx = [i for i in raw_idx if state['labels'][i] == 1]
+            # covered_false_idx = [i for i in raw_idx if state['labels'][i] == 0]
+
             exs = {}
-            # exs['covered'] = matrix_subset(raw_data, 10)
-            # exs['covered_true'] = matrix_subset(covered_true, 10)
-            # exs['covered_false'] = matrix_subset(covered_false, 10)
-            exs['covered_true'] = matrix_subset(covered_true_idx, 10)
-            exs['covered_false'] = matrix_subset(covered_false_idx, 10)
-            # exs['uncovered_true'] = np.array([])
-            # exs['uncovered_false'] = np.array([])
+            exs['covered'] = matrix_subset(raw_data, 10)
+            exs['covered_true'] = matrix_subset(covered_true, 10)
+            exs['covered_false'] = matrix_subset(covered_false, 10)
+            exs['covered_true_idx'] = exs['covered_true'][:, 0]
+            exs['covered_false_idx'] = exs['covered_false'][:, 0]
+            exs['uncovered_true'] = np.array([])
+            exs['uncovered_false'] = np.array([])
             anchor['examples'].append(exs)
         return anchor
 
@@ -336,8 +342,7 @@ class AnchorBaseBeam(object):
             # print state['data'].shape[0]
             stop_this = False
             for i, t in zip(chosen_tuples, best_of_size[current_size]):
-                # I can choose at most (beam_size - 1) tuples at each step,
-                # and there are at most n_feature steps
+                # I can choose at most (beam_size - 1) tuples at each step, and there are at most n_feature steps
                 beta = np.log(1. /
                               (delta / (1 + (beam_size - 1) * n_features)))
                 # beta = np.log(1. / delta)
@@ -353,7 +358,7 @@ class AnchorBaseBeam(object):
                 if verbose:
                     print(i, mean, lb, ub)
                 while ((mean >= desired_confidence and
-                       lb < desired_confidence - epsilon_stop) or
+                        lb < desired_confidence - epsilon_stop) or
                        (mean < desired_confidence and
                         ub >= desired_confidence + epsilon_stop)):
                     # print mean, lb, state['t_nsamples'][t]
@@ -364,7 +369,8 @@ class AnchorBaseBeam(object):
                     ub = AnchorBaseBeam.dup_bernoulli(
                         mean, beta / state['t_nsamples'][t])
                 if verbose:
-                    print('%s mean = %.2f lb = %.2f ub = %.2f coverage: %.2f n: %d' % (t, mean, lb, ub, coverage, state['t_nsamples'][t]))
+                    print('%s mean = %.2f lb = %.2f ub = %.2f coverage: %.2f n: %d' % (
+                        t, mean, lb, ub, coverage, state['t_nsamples'][t]))
                 if mean >= desired_confidence and lb > desired_confidence - epsilon_stop:
                     if verbose:
                         print('Found eligible anchor ', t, 'Coverage:',

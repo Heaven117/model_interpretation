@@ -34,6 +34,8 @@ class MLP(nn.Module):
 
     def predict_anchor(self, x, encoder):
         x = encoder_process(x, encoder)
+        # 删除第一列id列
+        # x = x[:,1:]
         x = normalize(x, axis=0, norm='max')
         x = torch.from_numpy(x)
         out = self.forward(x)

@@ -19,11 +19,12 @@ data_file = args.data_path + 'final_data.csv'
 pre_file = args.out_dir + getFileName('pred_data', 'csv')
 raw_data = json.loads(pd.read_csv(data_file, header=0).to_json(orient='records'))
 pre_data = json.loads(pd.read_csv(pre_file, header=0).to_json(orient='records'))
+raw_data_len = len(raw_data)
 with open(args.out_dir + getFileName('influence', 'json'), 'r', encoding='utf-8') as fp:
     influenceData = json.load(fp)
     print('=====influence file read done')
 fp.close()
-with open(args.out_dir + getFileName('anchors', 'json'), 'r', encoding='utf-8') as fp:
+with open(args.out_dir + getFileName('ianchors', 'json'), 'r', encoding='utf-8') as fp:
     anchorData = json.load(fp)
     print('=====anchor file read done')
 fp.close()
@@ -42,34 +43,14 @@ fp.close()
 
 # ------ Help Function ------- #
 def getSingleSample(idx):
+    if idx < 0 or idx > raw_data_len:
+        print(f'Please enter a correct number ,not {idx}')
+        return None
     sample = copy.deepcopy(raw_data[idx])
     sample['prediction'] = adult_target_value[pre_data[idx]['prediction']]
     sample['category'] = pre_data[idx]['category']
     sample['percentage'] = pre_data[idx]['percentage']
     return sample
-
-
-def getAnchorData(anchorData):
-    ans = {}
-    ans['feature'] = anchorData['feature']
-    ans['precision'] = anchorData['precision']
-    examples = anchorData['examples']
-
-    newEx = []
-    for ex in examples:
-        cts = []
-        cfs = []
-        covered_true = ex['covered_true']
-        covered_false = ex['covered_false']
-        for ct in covered_true:
-            tmp = getSingleSample(ct)
-            cts.append(tmp)
-        for cf in covered_false:
-            tmp = getSingleSample(cf)
-            cfs.append(tmp)
-        newEx.append({'covered_true': cts, 'covered_false': cfs})
-    ans['examples'] = newEx
-    return ans
 
 
 # ------ Initialize WebApp ------- #
@@ -99,7 +80,6 @@ def getPredData():
 @app.route('/getInstance')
 def getInstance():
     idx = -10
-    raw_data_len = len(raw_data)
     try:
         idx = int(request.args.get('params'))
     except:
@@ -107,23 +87,44 @@ def getInstance():
 
     if idx < 0 or idx > raw_data_len:
         return f"Please enter a sample number in the range (1, ${raw_data_len})."
-    else:
-        # ! anchor 算法
-        # anchors = find_anchor(idx,model)
-        if idx > len(anchorData):
-            anchors = []
-        else:
-            anchors = getAnchorData(anchorData[str(idx)])
-        # anchors = anchorData[str(idx)]
-        sample = getSingleSample(idx)
+    sample = getSingleSample(idx)
+    response = {'id': idx, 'total': len(raw_data), 'sample': sample}
+    return toJson(response)
 
-        response = {'id': idx, 'total': len(raw_data), 'sample': sample, 'anchor': anchors}
-        return toJson(response)
+
+@app.route('/getAnchor')
+def getAnchor():
+    try:
+        idx = request.args.get('params')
+    except:
+        return f"Please enter a sample number in the range (1, ${raw_data_len})."
+
+    if int(idx) < 0 or int(idx) > raw_data_len:
+        return f"Please enter a sample number in the range (1, ${raw_data_len})."
+    anchor = anchorData[idx]
+
+    def getSampleCovered(covered):
+        new_ct = []
+        for ct_item in covered:
+            new_ct_list = []
+            for j in ct_item:
+                tmp = getSingleSample(j)
+                new_ct_list.append(tmp)
+            new_ct.append(new_ct_list)
+        return np.array(new_ct)
+
+    response = {}
+    response['feature'] = anchor['feature']
+    response['precision'] = anchor['precision']
+    response['coverage'] = anchor['coverage']
+    response['covered_false'] = getSampleCovered(anchor['covered_false'])
+    response['covered_true'] = getSampleCovered(anchor['covered_true'])
+    return toJson(response)
 
 
 # 获取相似数据-影响训练点
-@app.route('/getSimilarData')
-def getSimilarData():
+@app.route('/getInfluenceData')
+def getInfluenceData():
     try:
         idx = request.args.get('params')
     except:
@@ -155,12 +156,13 @@ def getDiceData():
         idx = request.args.get('params')
     except:
         return f"Please enter a sample number."
-    
+
     inData = diceData[str(idx)]
     cfs_list = inData['cfs_list']
-
+    pf = pd.DataFrame(cfs_list, columns=adult_process_names)
+    cfs_list = pf.to_dict(orient='records')
     response = {'cfs_list': cfs_list}
-    return toJson(inData)
+    return toJson(response)
 
 
 # @app.route('/runModel',methods=['GET', 'POST'])

@@ -13,8 +13,11 @@ args = parse_args()
 int_col_len = -1
 
 
-def load_adult_income_dataset(encode=True):
-    datafile = args.data_path + 'final_data.csv'
+def load_adult_income_dataset(encode=True, baseDir=None):
+    if baseDir is not None:
+        datafile = baseDir + args.data_path + 'final_data.csv'
+    else:
+        datafile = args.data_path + 'final_data.csv'
     adult_data = pd.read_csv(datafile, header=0)
     adult_data.drop('id', axis=1, inplace=True)
     target = adult_data['income']
@@ -22,15 +25,37 @@ def load_adult_income_dataset(encode=True):
     df_object_col = [col for col in adult_data.columns if adult_data[col].dtype.name == 'object']  # 3个
     df_int_col = [col for col in adult_data.columns if adult_data[col].dtype.name != 'object']
     adult_data = pd.concat([adult_data[df_int_col], adult_data[df_object_col]], axis=1)
-    global int_col_len
-    int_col_len = len(df_int_col)
+    # print(adult_data.columns)
 
     if encode:
         adult_data.drop('income', axis=1, inplace=True)
+        global int_col_len
+        int_col_len = len(df_int_col) - 1
         adult_data, one_hot_encoder, categorical_names = data_encode_define(adult_data.values)
         return adult_data, target, one_hot_encoder, categorical_names
     else:
         return adult_data
+
+
+def data_encode_define(dataset):
+    categorical_names = {}
+    for feature in range(int_col_len, dataset.shape[1]):
+        le = sklearn.preprocessing.LabelEncoder()
+        le.fit(dataset[:, feature])
+        dataset[:, feature] = le.transform(dataset[:, feature])
+        categorical_names[feature] = le.classes_
+    # dataset = np.array(dataset, dtype=np.float32)
+    one_hot_encoder = OneHotEncoder()
+    one_hot_encoder.fit(dataset[:, int_col_len:])
+    return dataset, one_hot_encoder, categorical_names
+
+
+def encoder_process(x_data, encoder):
+    dataset = copy.deepcopy(x_data[:, :int_col_len])
+    tmp = encoder.transform(x_data[:, int_col_len:]).toarray()
+    dataset = np.concatenate((dataset, tmp), axis=1)
+    dataset = np.array(dataset, dtype=np.float32)
+    return dataset
 
 
 def data_process():
@@ -57,25 +82,33 @@ def data_process():
     return df, target
 
 
-def data_encode_define(dataset):
-    categorical_names = {}
-    for feature in range(int_col_len, dataset.shape[1]):
-        le = sklearn.preprocessing.LabelEncoder()
-        le.fit(dataset[:, feature])
-        dataset[:, feature] = le.transform(dataset[:, feature])
-        categorical_names[feature] = le.classes_
-    dataset = np.array(dataset, dtype=np.float32)
-    one_hot_encoder = OneHotEncoder()
-    one_hot_encoder.fit(dataset[:, int_col_len:])
-    return dataset, one_hot_encoder, categorical_names
+def data_process_anchor():
+    # 获取数据集
+    datafile = args.data_path + args.dataset + '.data'
+    df = pd.read_csv(datafile, header=None, skipinitialspace=True, names=adult_column_names)
+    df.replace("?", pd.NaT, inplace=True)
+    df.replace(">50K", 1, inplace=True)
+    df.replace("<=50K", 0, inplace=True)
 
+    trans = {'workclass': df['workclass'].mode()[0], 'occupation': df['occupation'].mode()[0],
+             'native-country': df['native-country'].mode()[0]}
+    df.fillna(trans, inplace=True)
+    df.drop('fnlwgt', axis=1, inplace=True)
+    df.drop('capital-gain', axis=1, inplace=True)
+    df.drop('capital-loss', axis=1, inplace=True)
 
-def encoder_process(x_data, encoder):
-    dataset = copy.deepcopy(x_data[:, :int_col_len])
-    tmp = encoder.transform(x_data[:, int_col_len:]).toarray()
-    dataset = np.concatenate((dataset, tmp), axis=1)
-    dataset = np.array(dataset, dtype=np.float32)
-    return dataset
+    # 连续值 qcut离散化
+    # q = [0, 0.25, 0.5, 0.75, 1]
+    # for f in continuous_features:
+    #     df[f] = pd.qcut(df[f], q, labels=False, duplicates='drop')
+    #     print()
+    #
+    target = df["income"]
+    target = np.array(target)
+    print(df.columns.values)
+    # df.to_csv(args.data_path + 'anchor_data.csv', index_label='id')
+
+    return df, target
 
 
 class Adult_data(Dataset):
@@ -120,7 +153,8 @@ class Adult_data(Dataset):
 
 
 if __name__ == "__main__":
-    data_process()
+    # data_process()
+    data_process_anchor()
     # train_dataset = Adult_data(mode='train')
     # test_dataset = Adult_data(mode = 'test')
 
