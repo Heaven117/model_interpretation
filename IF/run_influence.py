@@ -120,6 +120,11 @@ def calc_influence_single(model, train_loader, test_loader, test_id_num, recursi
         influences.append(tmp_influence)
         display_progress(f"Calc. influence test_id_{test_id_num}: ", i, train_dataset_size)
 
+    infl = np.array(influences, dtype=float)
+    # 归一化（-1，1）
+    _range = np.max(abs(infl))
+    infl_new = infl / _range
+
     harmful = np.argsort(influences)
     helpful = harmful[::-1]
 
@@ -130,7 +135,7 @@ def calc_influence_single(model, train_loader, test_loader, test_id_num, recursi
 def calc_main(model, train_loader, test_loader, start=0):
     outdir = Path(args.out_dir)
     # todo test设置1
-    test_dataset_iter_len = 10
+    test_dataset_iter_len = 5
     # test_dataset_iter_len = len(test_loader.dataset)
     influences = {}
     last = start
@@ -144,7 +149,14 @@ def calc_main(model, train_loader, test_loader, start=0):
         influences[str(i)] = {}
         influences[str(i)]['time_calc_influence_s'] = end_time - start_time
         infl = [x.cpu().numpy().tolist() for x in influence]
-        influences[str(i)]['influence'] = infl
+        infl = np.array(infl, dtype=float)
+        # 归一化（-1，1）
+        _range = np.max(abs(infl))
+        infl_new = infl / _range
+
+        influences[str(i)]['influence'] = np.around(infl_new, 5)
+        influences[str(i)]['max'] = infl_new.max()
+        influences[str(i)]['min'] = infl_new.min()
         influences[str(i)]['harmful'] = harmful[:500]
         influences[str(i)]['helpful'] = helpful[:500]
 

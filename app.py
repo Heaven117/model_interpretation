@@ -16,7 +16,7 @@ np.random.seed(12345)
 # ------- Initialize file ------- #
 data_file = args.data_path + 'final_data.csv'
 # pre_file = args.out_dir + f'pred_data_{args.model_type}_epoch{args.epoch}.csv'
-pre_file = args.out_dir + getFileName('pred_data', 'csv')
+pre_file = args.out_dir + getFileName('prediction', 'csv')
 raw_data = json.loads(pd.read_csv(data_file, header=0).to_json(orient='records'))
 pre_data = json.loads(pd.read_csv(pre_file, header=0).to_json(orient='records'))
 raw_data_len = len(raw_data)
@@ -137,7 +137,8 @@ def getInfluenceData():
     harmful = inData['harmful']
     helpful = inData['helpful']
 
-    response = {'total': total, 'time': time, 'harmful': [], 'helpful': []}
+    response = {'total': total, 'time': time, 'influence': [], 'harmful': [], 'helpful': [], 'max': inData['max'],
+                'min': inData['min']}
     for i in range(len(harmful)):
         response['harmful'].append({
             'id': harmful[i],
@@ -147,6 +148,13 @@ def getInfluenceData():
             'id': helpful[i],
             'value': influence[helpful[i]],
         })
+    for i in range(len(influence)):
+        response['influence'].append({
+            'id': i,
+            'value': influence[i],
+            'sign': (1 if influence[i] else 0)
+        })
+
     return toJson(response)
 
 

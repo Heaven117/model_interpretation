@@ -16,6 +16,7 @@ def parse_args():
     parser.add_argument('--pretrain', type=int, default=0,
                         help='0: No pretrain, 1:Pretrain with stored models.')
 
+    parser.add_argument('--random_state', type=int, default=1)
     parser.add_argument('--batch_size', type=int, default=1,
                         help='batch size.')
     parser.add_argument('--epoch', type=int, default=100,

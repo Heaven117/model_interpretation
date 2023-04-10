@@ -34,7 +34,7 @@ def load_adult_income_dataset(encode=True, baseDir=None):
         adult_data, one_hot_encoder, categorical_names = data_encode_define(adult_data.values)
         return adult_data, target, one_hot_encoder, categorical_names
     else:
-        return adult_data
+        return adult_data, target
 
 
 def data_encode_define(dataset):
@@ -112,19 +112,22 @@ def data_process_anchor():
 
 
 class Adult_data(Dataset):
-    def __init__(self, mode, tensor=True):
+    def __init__(self, mode, tensor=True, encode=True):
         super(Adult_data, self).__init__()
         self.mode = mode
         x_dataset, target, one_hot_encoder, _ = load_adult_income_dataset()
-        x_dataset = encoder_process(x_dataset, one_hot_encoder)
-        x_dataset = normalize(x_dataset, axis=0, norm='max')
+        self.encoder = one_hot_encoder
+        if encode:
+            x_dataset = encoder_process(x_dataset, one_hot_encoder)
+            x_dataset = normalize(x_dataset, axis=0, norm='max')
 
         # 划分数据集
         train_dataset, test_dataset, y_train, y_test = train_test_split(x_dataset,
                                                                         target,
                                                                         test_size=0.2,
-                                                                        random_state=0,
+                                                                        random_state=args.random_state,
                                                                         stratify=target)
+
         if tensor:
             if mode == 'train':
                 self.target = torch.tensor(y_train)

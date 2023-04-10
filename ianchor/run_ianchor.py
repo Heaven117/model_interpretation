@@ -2,31 +2,31 @@ from ianchor.anchor import Anchor, Tasktype
 from models.data_process import *
 from models.run_MLP import load_model
 
-
-def anchor_to_json():
-    anchors = {}
-    anchors['total'] = dataset_len
-
-
 if __name__ == "__main__":
     model = load_model()
-    x_dataset, target, encoder, categorical_names = load_adult_income_dataset()
+    # 加载划分数据集
+    dataset, target, encoder, categorical_names = load_adult_income_dataset()
+    train_dataset, test_dataset, y_train, y_test = train_test_split(dataset,
+                                                                    target,
+                                                                    test_size=0.2,
+                                                                    random_state=args.random_state,
+                                                                    stratify=target)
 
-    # adult_process_names.insert(0, 'id')
     predict_fn = lambda x: model.predict_anchor(x, encoder)
 
     explainer = Anchor(Tasktype.TABULAR)
 
-    task_paras = {"dataset": x_dataset,
+    task_paras = {"dataset": train_dataset,
                   "column_names": adult_process_names}
     method_paras = {"beam_size": 1, "desired_confidence": 1.0}
 
-    exp_len = 3
+    # exp_len = test_dataset.shape[0]
+    exp_len = 10
     ans = {}
     ans['total'] = exp_len
     for i in range(exp_len):
         anchor = explainer.explain_instance(
-            input=x_dataset[i].reshape(1, -1),
+            input=test_dataset[i].reshape(1, -1),
             predict_fn=predict_fn,
             method="beam",
             task_specific=task_paras,
@@ -61,6 +61,6 @@ if __name__ == "__main__":
         ans[str(i)]['covered_true'] = covered_true_list
         ans[str(i)]['covered_false'] = covered_false_list
 
-    save_json(ans, args.out_dir + getFileName('ianchors', 'json'), overwrite_if_exists=True)
+    save_json(ans, args.out_dir + getFileName('ianchors_split', 'json'), overwrite_if_exists=True)
     print(anchor)
-    print(explainer.visualize(anchor, x_dataset[1], adult_process_names))
+    # print(explainer.visualize(anchor, test_dataset[1], adult_process_names))

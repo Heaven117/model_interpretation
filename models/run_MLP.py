@@ -139,7 +139,8 @@ def test_MLP(test_loader, to_csv=False):
                 category = "TP"
             df.iloc[i, 1] = category
 
-        df.to_csv(args.out_dir + getFileName('pred_data', 'csv'), index='id', float_format='%.6f', index_label='id')
+        df.to_csv(args.out_dir + getFileName('prediction', 'csv'), index='id', float_format='%.6f',
+                  index_label='id')
 
 
 def load_model():
@@ -158,7 +159,7 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
     dataset_loader = DataLoader(dataset_loader, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
-    train_MLP(train_loader, test_loader)
+    # train_MLP(train_loader, test_loader)
 
-    # test_MLP(test_loader)
-    test_MLP(dataset_loader, to_csv=True)
+    test_MLP(test_loader, to_csv=True)
+    # test_MLP(dataset_loader, to_csv=True)
