@@ -97,8 +97,30 @@ def train_MLP(train_loader, test_loader):
     torch.save(model.state_dict(), args.model_path + f'MPL_{args.epoch}.pth')
 
 
-def test_MLP(test_loader, to_csv=False):
+def getCategory(predicted, model_correct):
+    category = "NA"
+    if (predicted, model_correct) == (0, 0):
+        category = "FN"
+    elif (predicted, model_correct) == (0, 1):
+        category = "TN"
+    elif (predicted, model_correct) == (1, 0):
+        category = "FP"
+    elif (predicted, model_correct) == (1, 1):
+        category = "TP"
+    return category
+
+
+def test_MLP(test_loader):
     os.makedirs(args.out_dir, exist_ok=True)
+    # 原始数据，测试不用这个
+    x_dataset, target = load_adult_income_dataset(encode=False)
+    x_dataset.drop('income', axis=1, inplace=True)
+    train_dataset, test_dataset, y_train, y_test = train_test_split(x_dataset,
+                                                                    target,
+                                                                    test_size=0.2,
+                                                                    random_state=args.random_state,
+                                                                    stratify=target)
+    df = pd.DataFrame(test_dataset, columns=adult_process_names)
 
     best_model = MLP().to(device)
     criterion = nn.CrossEntropyLoss()
@@ -108,6 +130,9 @@ def test_MLP(test_loader, to_csv=False):
     test_loss = 0.0
     test_acc = 0.0
     result = []
+    out_list = []
+    category_list = []
+    pred_list = []
     best_model.eval()
     for x, label in test_loader:
         x, label = x.to(device), label.to(device)
@@ -116,31 +141,48 @@ def test_MLP(test_loader, to_csv=False):
 
         test_loss += loss.item()
         _, pred = torch.max(out, 1)
-        result.append([out[0][1].item(), (pred == label).item(), pred.item()])
+
+        out_list.append(out[0][1].item())
+        category_list.append(getCategory(pred.item(), (pred == label).item()))
+        pred_list.append(pred.item())
+
+        # result.append([out[0][1].item(), getCategory((pred == label).item(), pred.item()), pred.item()])
         num_correct = (pred == label).sum().item()
         acc = num_correct / x.shape[0]
         test_acc += acc
 
-    print(f'test_loss : {test_loss / len(test_loader.dataset)}, test_acc : {test_acc / len(test_loader)}')
+    print(f'test_loss : {test_loss / len(test_loader)}, test_acc : {test_acc / len(test_loader)}')
     # result = torch.cat(result, dim = 0).cpu().numpy()
+    df['percentage'] = out_list
+    df['category'] = category_list
+    df['prediction'] = pred_list
 
-    if to_csv:
-        df = pd.DataFrame(result, columns=['percentage', 'category', 'prediction'])
-        for i, res in enumerate(result):
-            out, model_correct, predicted = res
-            category = "NA"
-            if (predicted, model_correct) == (0, 0):
-                category = "FN"
-            elif (predicted, model_correct) == (0, 1):
-                category = "TN"
-            elif (predicted, model_correct) == (1, 0):
-                category = "FP"
-            elif (predicted, model_correct) == (1, 1):
-                category = "TP"
-            df.iloc[i, 1] = category
+    df.to_csv(args.out_dir + getFileName('prediction', 'csv'), index='id', float_format='%.4f',
+              index_label='id')
 
-        df.to_csv(args.out_dir + getFileName('prediction', 'csv'), index='id', float_format='%.6f',
-                  index_label='id')
+
+def test_model(model, test_loader):
+    criterion = nn.CrossEntropyLoss()
+    test_loss = 0.0
+    test_acc = 0.0
+    out_list = []
+    pred_list = []
+    model.eval()
+    for x, label in test_loader:
+        x, label = x.to(device), label.to(device)
+        out = model(x)
+        loss = criterion(out, label)
+
+        test_loss += loss.item()
+        _, pred = torch.max(out, 1)
+
+        out_list.append(out[0][1].item())
+        pred_list.append(pred.item())
+
+        num_correct = (pred == label).sum().item()
+        acc = num_correct / x.shape[0]
+        test_acc += acc
+    print(f'test_loss : {test_loss / len(test_loader)}, test_acc : {test_acc / len(test_loader)}')
 
 
 def load_model():
@@ -161,5 +203,5 @@ if __name__ == "__main__":
 
     # train_MLP(train_loader, test_loader)
 
-    test_MLP(test_loader, to_csv=True)
+    test_MLP(test_loader)
     # test_MLP(dataset_loader, to_csv=True)

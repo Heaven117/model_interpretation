@@ -80,8 +80,8 @@ class TabularSampler:
         labels = (preds == self.label).astype(int)
 
         # update candidate
-        covered_true = [sample_idxs[i] for i in range(len(labels)) if labels[i]]
-        covered_false = [sample_idxs[i] for i in range(len(labels)) if labels[i] == 0]
+        covered_true = [samples[i] for i in range(len(labels)) if labels[i]]
+        covered_false = [samples[i] for i in range(len(labels)) if labels[i] == 0]
         candidate.update_precision(np.sum(labels), num_samples, covered_true, covered_false)
 
         return candidate, masks

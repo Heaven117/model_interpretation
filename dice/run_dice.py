@@ -42,7 +42,7 @@ features_to_vary = ['age', 'workclass', 'education', 'educational-num', 'marital
 
 # 生成反事实解释
 dataset.drop('income', axis=1, inplace=True)
-query_instance = x_test[1:5]
+query_instance = x_test[1:11]
 dice_exp = exp.generate_counterfactuals(query_instance, total_CFs=5, desired_class="opposite", proximity_weight=1.5,
                                         diversity_weight=1.0, feature_weights=feature_weights,
                                         features_to_vary=features_to_vary)

@@ -31,7 +31,7 @@ def load_adult_income_dataset(encode=True, baseDir=None):
         adult_data.drop('income', axis=1, inplace=True)
         global int_col_len
         int_col_len = len(df_int_col) - 1
-        adult_data, one_hot_encoder, categorical_names = data_encode_define(adult_data.values)
+        adult_data, one_hot_encoder, categorical_names = data_encode_define(adult_data)
         return adult_data, target, one_hot_encoder, categorical_names
     else:
         return adult_data, target
@@ -39,12 +39,18 @@ def load_adult_income_dataset(encode=True, baseDir=None):
 
 def data_encode_define(dataset):
     categorical_names = {}
-    for feature in range(int_col_len, dataset.shape[1]):
+    for feature in discrete_features:
         le = sklearn.preprocessing.LabelEncoder()
-        le.fit(dataset[:, feature])
-        dataset[:, feature] = le.transform(dataset[:, feature])
+        le.fit(dataset[feature])
+        dataset[feature] = le.transform(dataset[feature])
         categorical_names[feature] = le.classes_
-    # dataset = np.array(dataset, dtype=np.float32)
+
+    # for feature in range(int_col_len, dataset.shape[1]):
+    #     le = sklearn.preprocessing.LabelEncoder()
+    #     le.fit(dataset[:, feature])
+    #     dataset[:, feature] = le.transform(dataset[:, feature])
+    #     categorical_names[feature] = le.classes_
+    dataset = np.array(dataset, dtype=np.float32)
     one_hot_encoder = OneHotEncoder()
     one_hot_encoder.fit(dataset[:, int_col_len:])
     return dataset, one_hot_encoder, categorical_names
@@ -82,37 +88,8 @@ def data_process():
     return df, target
 
 
-def data_process_anchor():
-    # 获取数据集
-    datafile = args.data_path + args.dataset + '.data'
-    df = pd.read_csv(datafile, header=None, skipinitialspace=True, names=adult_column_names)
-    df.replace("?", pd.NaT, inplace=True)
-    df.replace(">50K", 1, inplace=True)
-    df.replace("<=50K", 0, inplace=True)
-
-    trans = {'workclass': df['workclass'].mode()[0], 'occupation': df['occupation'].mode()[0],
-             'native-country': df['native-country'].mode()[0]}
-    df.fillna(trans, inplace=True)
-    df.drop('fnlwgt', axis=1, inplace=True)
-    df.drop('capital-gain', axis=1, inplace=True)
-    df.drop('capital-loss', axis=1, inplace=True)
-
-    # 连续值 qcut离散化
-    # q = [0, 0.25, 0.5, 0.75, 1]
-    # for f in continuous_features:
-    #     df[f] = pd.qcut(df[f], q, labels=False, duplicates='drop')
-    #     print()
-    #
-    target = df["income"]
-    target = np.array(target)
-    print(df.columns.values)
-    # df.to_csv(args.data_path + 'anchor_data.csv', index_label='id')
-
-    return df, target
-
-
 class Adult_data(Dataset):
-    def __init__(self, mode, tensor=True, encode=True):
+    def __init__(self, mode: object, tensor: object = True, encode: object = True) -> object:
         super(Adult_data, self).__init__()
         self.mode = mode
         x_dataset, target, one_hot_encoder, _ = load_adult_income_dataset()
@@ -156,10 +133,13 @@ class Adult_data(Dataset):
 
 
 if __name__ == "__main__":
-    # data_process()
-    data_process_anchor()
-    # train_dataset = Adult_data(mode='train')
-    # test_dataset = Adult_data(mode = 'test')
-
-    # train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle = True, drop_last = False)
-    # test_loader = DataLoader(test_dataset, batch_size = args.batch_size, shuffle = False, drop_last = False)
+    x_dataset, target = load_adult_income_dataset(False)
+    # 划分数据集
+    train_dataset, test_dataset, y_train, y_test = train_test_split(x_dataset,
+                                                                    target,
+                                                                    test_size=0.2,
+                                                                    random_state=args.random_state,
+                                                                    stratify=target)
+    # df = pd.DataFrame(test_dataset)
+    # df.to_csv(args.out_dir + getFileName('test', 'csv'), index='id', float_format='%.4f',
+    #                 index_label='id')

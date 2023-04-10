@@ -59,13 +59,11 @@ class Anchor:
             input (Any): The instance to explain - can be an image, data row or text.
             predict_fn (Callable): A function that returns the class prediction for a sample (can be wrapped with provided wrapper functions).
             method (String): Defines the optimization function. Can be (``greedy``), (``beam``) or (``smac``).
-            dataset (np.array): The dataset for permutation. Could be images for image task or tabular data for tabular task.
             task_specific (dict): Task specific arguments. For tabular this includes the (``column_names``) and (``dataset``) argument. For images it includes (``dataset``).
             method_specific (dict): Optimization method specific arguments. For Beam Search this includes (``beam_size``) and (``desired_confidence``).
                 For greedy this includes (``desired_confidence``). For Smac this includes (``run_time``) in seconds and (``optim``).
                 Optim is a function with the signature AnchorCandiate -> float that will be minimized.
             num_coverage_samples (int): Number of coverage samples
-            desired_confidence (float): desired precision confidence for the anchor.
             epsilon (float)
             batch_size (int)
             verbose (bool)

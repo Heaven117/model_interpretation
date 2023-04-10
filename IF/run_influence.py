@@ -124,37 +124,34 @@ def calc_influence_single(model, train_loader, test_loader, test_id_num, recursi
     # 归一化（-1，1）
     _range = np.max(abs(infl))
     infl_new = infl / _range
-
-    harmful = np.argsort(influences)
-    helpful = harmful[::-1]
-
-    return influences, harmful.tolist(), helpful.tolist(), test_id_num
+    return infl_new
 
 
 # 计算所有test data的影响
 def calc_main(model, train_loader, test_loader, start=0):
     outdir = Path(args.out_dir)
     # todo test设置1
-    test_dataset_iter_len = 5
+    test_dataset_iter_len = 10
     # test_dataset_iter_len = len(test_loader.dataset)
     influences = {}
     last = start
     for i in range(start, test_dataset_iter_len):
         start_time = time.time()
-        influence, harmful, helpful, _ = calc_influence_single(model, train_loader, test_loader, test_id_num=i,
-                                                               recursion_depth=1)
+        infl_new = calc_influence_single(model, train_loader, test_loader, test_id_num=i,
+                                         recursion_depth=1)
         end_time = time.time()
 
         influences['total'] = i + 1
         influences[str(i)] = {}
         influences[str(i)]['time_calc_influence_s'] = end_time - start_time
-        infl = [x.cpu().numpy().tolist() for x in influence]
-        infl = np.array(infl, dtype=float)
-        # 归一化（-1，1）
-        _range = np.max(abs(infl))
-        infl_new = infl / _range
 
-        influences[str(i)]['influence'] = np.around(infl_new, 5)
+        # harmful = np.argsort(infl_new)
+        # helpful = harmful[::-1]
+        infl_new = np.around(infl_new, 4)
+        harmful = np.where(infl_new < -0.0)[0]
+        helpful = np.where(infl_new > 0.0)[0]
+
+        influences[str(i)]['influence'] = infl_new
         influences[str(i)]['max'] = infl_new.max()
         influences[str(i)]['min'] = infl_new.min()
         influences[str(i)]['harmful'] = harmful[:500]
