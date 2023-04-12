@@ -114,12 +114,12 @@ def test_MLP(test_loader):
     os.makedirs(args.out_dir, exist_ok=True)
     # 原始数据，测试不用这个
     x_dataset, target = load_adult_income_dataset(encode=False)
-    x_dataset.drop('income', axis=1, inplace=True)
     train_dataset, test_dataset, y_train, y_test = train_test_split(x_dataset,
                                                                     target,
                                                                     test_size=0.2,
                                                                     random_state=args.random_state,
                                                                     stratify=target)
+    adult_process_names.append('income')
     df = pd.DataFrame(test_dataset, columns=adult_process_names)
 
     best_model = MLP().to(device)

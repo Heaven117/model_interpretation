@@ -6,7 +6,6 @@ from sklearn.model_selection import train_test_split
 
 from models.data_process import load_adult_income_dataset
 from models.run_MLP import load_model
-from utils.helper import save_json, getFileName
 from utils.parser import *
 
 args = parse_args()
@@ -32,20 +31,11 @@ exp = dice_ml.Dice(d, m, method="gradient")
 # get MAD
 mads = d.get_mads(normalized=True)
 
-# create feature weights
-feature_weights = {}
-for feature in mads:
-    feature_weights[feature] = round(1 / mads[feature], 2)
-print(feature_weights)
-features_to_vary = ['age', 'workclass', 'education', 'educational-num', 'marital-status',
-                    'occupation', 'relationship', 'hours-per-week']
-
 # 生成反事实解释
 dataset.drop('income', axis=1, inplace=True)
-query_instance = x_test[1:11]
+query_instance = x_test[2:3]
 dice_exp = exp.generate_counterfactuals(query_instance, total_CFs=5, desired_class="opposite", proximity_weight=1.5,
-                                        diversity_weight=1.0, feature_weights=feature_weights,
-                                        features_to_vary=features_to_vary)
+                                        diversity_weight=1.0)
 
 # imp = exp.local_feature_importance(query_instance, posthoc_sparsity_param=None)
 # print(imp.local_importance)
@@ -68,5 +58,5 @@ for i in range(len(dice_exp.cf_examples_list)):
     dices[str(i)] = {}
     dices[str(i)]['cfs_list'] = np.array(serialized_cf_examples['final_cfs_list'])
 
-save_json(dices, args.out_dir + getFileName('dice_split', 'json'), overwrite_if_exists=True)
-# dice_exp.cf_examples_list[0].final_cfs_df.to_csv(path_or_buf='counterfactuals.csv', index=False)
+# save_json(dices, args.out_dir + getFileName('dice', 'json'), overwrite_if_exists=True)
+dice_exp.cf_examples_list[0].final_cfs_df.to_csv(path_or_buf='counterfactuals.csv', index=False)
