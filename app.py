@@ -1,11 +1,13 @@
 import warnings
 
 import pandas as pd
+import torch
 from flask import Flask
 from flask import request
+from sklearn.preprocessing import normalize
 
-from models.data_process import load_adult_income_dataset
-from models.run_MLP import load_model
+from models.data_process import load_adult_income_dataset, encoder_process
+from models.run_MLP import load_model, test_model
 from utils.helper import *
 from utils.parser import parse_args
 
@@ -17,9 +19,11 @@ np.random.seed(12345)
 # ------- Initialize file ------- #
 data_file = args.data_path + 'final_data.csv'
 pre_file = args.out_dir + getFileName('prediction', 'csv')
+dice_file = args.out_dir + getFileName('dice', 'csv')
 train_data = json.loads(pd.read_csv(args.data_path + 'train.csv', header=0).to_json(orient='records'))
 pre_data = json.loads(pd.read_csv(pre_file, header=0).to_json(orient='records'))
 pre_data_len = len(pre_data)
+diceData = pd.read_csv(dice_file, header=0)
 with open(args.out_dir + getFileName('influence', 'json'), 'r', encoding='utf-8') as fp:
     influenceData = json.load(fp)
     print('=====influence file read done')
@@ -28,14 +32,15 @@ with open(args.out_dir + getFileName('ianchors_beam', 'json'), 'r', encoding='ut
     anchorData = json.load(fp)
     print('=====anchor file read done')
 fp.close()
-with open(args.out_dir + getFileName('dice', 'json'), 'r', encoding='utf-8') as fp:
-    diceData = json.load(fp)
-    print('=====dice file read done')
-fp.close()
+# with open(args.out_dir + getFileName('dice', 'json'), 'r', encoding='utf-8') as fp:
+#     diceData = json.load(fp)
+#     print('=====dice file read done')
+# fp.close()
 
 # ------- Initialize Model ------- #
 dataset, target, encoder, categorical_names = load_adult_income_dataset()
 model = load_model()
+loss, acc, FN, TN, FP, TP = test_model()
 
 
 # ------ Help Function ------- #
@@ -163,33 +168,56 @@ def getInfluenceData():
 @app.route('/getDiceData')
 def getDiceData():
     try:
-        idx = request.args.get('params')
+        idx = int(request.args.get('params'))
     except:
         return f"Please enter a sample number."
 
-    inData = diceData[str(idx)]
-    cfs_list = inData['cfs_list']
-    pf = pd.DataFrame(cfs_list, columns=adult_process_names)
-    cfs_list = pf.to_dict(orient='records')
-    response = {'cfs_list': cfs_list}
-    return toJson(response)
+    # inData = diceData[str(idx)]
+    # cfs_list = inData['cfs_list']
+    # pf = pd.DataFrame(cfs_list, columns=adult_process_names)
+    # cfs_list = pf.to_dict(orient='records')
+    # response = {'cfs_list': cfs_list}
+    # return toJson(response)
+
+    ans = []
+    sample = pre_data[idx]
+    list = diceData[diceData['from'] == idx]
+    list['percentage'] = list['income']
+    list = list.to_dict(orient='records')
+    ans.append(sample)
+    ans.extend(list)
+    return toJson(ans)
 
 
-# @app.route('/runModel',methods=['GET', 'POST'])
-# def runModel():
-#     if request.method == 'POST':
-#         print(request.json)
-#         test_set = request.json
-#         # model = load_model(save_path)
-#         x_test = torch.Tensor(test_set).to(device)
-#         y = model.pred(x_test).item()
-#         y_prob = model(x_test).item()
-#         print("Test result:\t{:.2%}\t{:.2%}".format(y,y_prob))
+@app.route('/getModeForm')
+def getModeForm():
+    return toJson(categorical_names)
 
-#         response = {}
-#         response['predict'] = y
-#         response['possible'] = y_prob
-#         return toJson(response)
+
+@app.route('/getModelInfo')
+def getModelInfo():
+    ans = {'loss': loss, 'acc': acc, 'FN': FN, 'TN': TN, 'FP': FP, 'TP': TP, 'categorical_names': categorical_names}
+    return toJson(ans)
+
+
+@app.route('/runModel', methods=['GET', 'POST'])
+def runModel():
+    params = request.json
+    val = [[float(params[i]) for i in params]]
+    val = np.array(val)
+    val = encoder_process(val, encoder)
+    testVal = normalize(val)
+    testVal = torch.FloatTensor(testVal)
+
+    x = testVal[0].to(args.device)
+    out = model(x)
+    _, pred = torch.max(out, 0)
+    prediction = pred.item()
+    percentage = round(out[1].item(), 5)
+
+    ans = {'prediction': prediction, 'percentage': percentage}
+    print(ans)
+    return toJson(ans)
 
 
 # ------- Run WebApp ------- #

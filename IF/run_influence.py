@@ -151,11 +151,13 @@ def calc_main(model, train_loader, test_loader, start=0):
         harmful = np.where(infl_new < -0.0)[0]
         helpful = np.where(infl_new > 0.0)[0]
 
-        influences[str(i)]['influence'] = infl_new
         influences[str(i)]['max'] = infl_new.max()
         influences[str(i)]['min'] = infl_new.min()
+        influences[str(i)]['harmful_len'] = len(harmful)
+        influences[str(i)]['helpful_len'] = len(helpful)
         influences[str(i)]['harmful'] = harmful[:500]
         influences[str(i)]['helpful'] = helpful[:500]
+        influences[str(i)]['influence'] = infl_new
 
         if (i != 0 and i % 99 == 0):
             influences_path = outdir.joinpath(f"influence_tmp_{last}-{i}.json")

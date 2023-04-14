@@ -1,0 +1,6 @@
+age,educational-num,hours-per-week,workclass,education,marital-status,occupation,relationship,race,gender,native-country,income,from
+88.0,13.0,70.0,Federal-gov,Bachelors,Widowed,Protective-serv,Wife,Asian-Pac-Islander,Male,Italy,1.0,2
+72.0,10.0,49.0,Self-emp-inc,Bachelors,Married-civ-spouse,Protective-serv,Husband,Asian-Pac-Islander,Male,United-States,1.0,2
+90.0,16.0,99.0,Self-emp-inc,Bachelors,Divorced,Protective-serv,Wife,Asian-Pac-Islander,Male,Canada,1.0,2
+85.0,13.0,58.0,Local-gov,Prof-school,Married-civ-spouse,Prof-specialty,Wife,Amer-Indian-Eskimo,Male,United-States,0.732,2
+81.0,15.0,50.0,Self-emp-inc,Doctorate,Married-civ-spouse,Sales,Wife,White,Male,Philippines,1.0,2

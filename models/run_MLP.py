@@ -161,28 +161,44 @@ def test_MLP(test_loader):
               index_label='id')
 
 
-def test_model(model, test_loader):
+def test_model():
+    model = load_model()
+    model.eval()
+    test_dataset = Adult_data(mode='test')
     criterion = nn.CrossEntropyLoss()
+
     test_loss = 0.0
     test_acc = 0.0
-    out_list = []
-    pred_list = []
-    model.eval()
-    for x, label in test_loader:
+    FN = 0
+    TN = 0
+    FP = 0
+    TP = 0
+    for x, label in test_dataset:
         x, label = x.to(device), label.to(device)
         out = model(x)
         loss = criterion(out, label)
 
         test_loss += loss.item()
-        _, pred = torch.max(out, 1)
-
-        out_list.append(out[0][1].item())
-        pred_list.append(pred.item())
+        _, pred = torch.max(out, 0)
 
         num_correct = (pred == label).sum().item()
-        acc = num_correct / x.shape[0]
-        test_acc += acc
-    print(f'test_loss : {test_loss / len(test_loader)}, test_acc : {test_acc / len(test_loader)}')
+        test_acc += num_correct
+
+        predicted = pred.item()
+        if (predicted, num_correct) == (0, 0):
+            FN += 1
+        elif (predicted, num_correct) == (0, 1):
+            TN += 1
+        elif (predicted, num_correct) == (1, 0):
+            FP += 1
+        elif (predicted, num_correct) == (1, 1):
+            TP += 1
+
+    total_loss = test_loss / len(test_dataset)
+    total_acc = test_acc / len(test_dataset)
+    print(f'test_loss : {total_loss}, test_acc : {total_acc}')
+
+    return total_loss, total_acc, FN, TN, FP, TP
 
 
 def load_model():
@@ -195,13 +211,12 @@ def load_model():
 if __name__ == "__main__":
     train_dataset = Adult_data(mode='train')
     test_dataset = Adult_data(mode='test')
-    dataset_loader = Adult_data(mode='none')
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
-    dataset_loader = DataLoader(dataset_loader, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
     # train_MLP(train_loader, test_loader)
+    # test_MLP(test_loader)
 
-    test_MLP(test_loader)
-    # test_MLP(dataset_loader, to_csv=True)
+    model = load_model()
+    test_model(model, test_dataset)

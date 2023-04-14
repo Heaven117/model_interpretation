@@ -74,6 +74,10 @@ def beamFind(exp_len):
     save_json(ans, args.out_dir + getFileName('ianchors_beam', 'json'), overwrite_if_exists=True)
 
 
+def calFeature():
+    print('111')
+
+
 if __name__ == "__main__":
     model = load_model()
     # 加载划分数据集

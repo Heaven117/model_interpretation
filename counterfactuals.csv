@@ -1,5 +1,0 @@
-age,educational-num,hours-per-week,workclass,education,marital-status,occupation,relationship,race,gender,native-country,income
-69.0,13.0,50.0,Self-emp-inc,Doctorate,Married-civ-spouse,Sales,Husband,Asian-Pac-Islander,Male,Philippines,1.0
-31.0,12.0,46.0,Private,Bachelors,Married-civ-spouse,Sales,Unmarried,Asian-Pac-Islander,Male,United-States,0.963
-44.0,16.0,50.0,Private,Bachelors,Widowed,Sales,Husband,White,Male,United-States,0.999
-85.0,13.0,60.0,Local-gov,Bachelors,Married-civ-spouse,Prof-specialty,Wife,White,Male,United-States,0.987
