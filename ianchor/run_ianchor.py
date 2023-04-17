@@ -95,8 +95,8 @@ if __name__ == "__main__":
     task_paras = {"dataset": train_dataset,
                   "column_names": adult_process_names}
 
-    # exp_len = test_dataset.shape[0]
-    exp_len = 10
+    exp_len = 100
+    # exp_len = 10
     # greedyFind(exp_len)
     beamFind(exp_len)
     # print(anchor)

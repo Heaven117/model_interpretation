@@ -1,12 +1,12 @@
 import warnings
 
 import pandas as pd
-import torch
+from alibi.explainers import PartialDependenceVariance
 from flask import Flask
 from flask import request
-from sklearn.preprocessing import normalize
+from sklearn.model_selection import train_test_split
 
-from models.data_process import load_adult_income_dataset, encoder_process
+from models.data_process import load_adult_income_dataset
 from models.run_MLP import load_model, test_model
 from utils.helper import *
 from utils.parser import parse_args
@@ -39,8 +39,23 @@ fp.close()
 
 # ------- Initialize Model ------- #
 dataset, target, encoder, categorical_names = load_adult_income_dataset()
+train_dataset, test_dataset, y_train, y_test = train_test_split(dataset,
+                                                                target,
+                                                                test_size=0.2,
+                                                                random_state=args.random_state,
+                                                                stratify=target)
 model = load_model()
 loss, acc, FN, TN, FP, TP = test_model()
+
+predict_fn = lambda x: model.predict_anchor(x, encoder)
+explainer = PartialDependenceVariance(predictor=predict_fn,
+                                      feature_names=adult_process_names,
+                                      target_names=adult_target_value, verbose=True)
+exp_importance = explainer.explain(X=train_dataset,
+                                   method='importance',
+                                   grid_resolution=50)
+feature_importance = exp_importance.feature_importance
+pd_values = exp_importance.pd_values
 
 
 # ------ Help Function ------- #
@@ -56,13 +71,19 @@ def getSampleCovered(covered):
     for ct_item in covered:
         df = pd.DataFrame(ct_item, columns=adult_process_names)
         for feature in discrete_features:
-            df[feature] = df[feature].map(lambda k: categorical_names[feature][k])
+            df[feature] = df[feature].map(lambda k: categorical_names[feature][int(k)])
         new_ct.append(df.to_dict(orient='record'))
     return np.array(new_ct)
 
 
 # ------ Initialize WebApp ------- #
 app = Flask(__name__)
+
+
+@app.route('/getGlobalData')
+def getGlobalData():
+    ans = {'feature_importance': feature_importance, 'pd_values': pd_values}
+    return toJson(ans)
 
 
 @app.route('/getPredData')
@@ -143,9 +164,10 @@ def getInfluenceData():
     influence = inData['influence']
     harmful = inData['harmful']
     helpful = inData['helpful']
+    harmPer = inData['harmful_len'] / (inData['helpful_len'] + inData['harmful_len'])
 
     response = {'total': total, 'time': time, 'influence': [], 'harmful': [], 'helpful': [], 'max': inData['max'],
-                'min': inData['min']}
+                'min': inData['min'], 'harmPer': harmPer}
     for i in range(len(harmful)):
         response['harmful'].append({
             'id': harmful[i],
@@ -182,7 +204,7 @@ def getDiceData():
     ans = []
     sample = pre_data[idx]
     list = diceData[diceData['from'] == idx]
-    list['percentage'] = list['income']
+    list['prediction'] = list['income']
     list = list.to_dict(orient='records')
     ans.append(sample)
     ans.extend(list)
@@ -205,17 +227,9 @@ def runModel():
     params = request.json
     val = [[float(params[i]) for i in params]]
     val = np.array(val)
-    val = encoder_process(val, encoder)
-    testVal = normalize(val)
-    testVal = torch.FloatTensor(testVal)
+    out = model.predict_anchor(val, encoder)
 
-    x = testVal[0].to(args.device)
-    out = model(x)
-    _, pred = torch.max(out, 0)
-    prediction = pred.item()
-    percentage = round(out[1].item(), 5)
-
-    ans = {'prediction': prediction, 'percentage': percentage}
+    ans = {'prediction': out[0], 'percentage': out}
     print(ans)
     return toJson(ans)
 

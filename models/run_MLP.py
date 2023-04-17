@@ -201,9 +201,13 @@ def test_model():
     return total_loss, total_acc, FN, TN, FP, TP
 
 
-def load_model():
+def load_model(baseDir=None):
     best_model = MLP().to(device)
-    ckpt = torch.load(args.model_path + f'MPL_{args.epoch}.pth', map_location='cpu')
+    if baseDir is not None:
+        ckptfile = baseDir + args.model_path + f'MPL_{args.epoch}.pth'
+    else:
+        ckptfile = args.model_path + f'MPL_{args.epoch}.pth'
+    ckpt = torch.load(ckptfile, map_location='cpu')
     best_model.load_state_dict(ckpt)
     return best_model
 
