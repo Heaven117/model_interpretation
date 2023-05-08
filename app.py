@@ -80,13 +80,13 @@ def getSampleCovered(covered):
 app = Flask(__name__)
 
 
-@app.route('/getGlobalData')
+@app.route('/api/getGlobalData')
 def getGlobalData():
     ans = {'feature_importance': feature_importance, 'pd_values': pd_values}
     return toJson(ans)
 
 
-@app.route('/getPredData')
+@app.route('/api/getPredData')
 def getPredData():
     idx = -1
     idx = request.args.get('idx')
@@ -102,7 +102,7 @@ def getPredData():
     return toJson(response)
 
 
-@app.route('/getInstance')
+@app.route('/api/getInstance')
 def getInstance():
     idx = -10
     try:
@@ -117,7 +117,7 @@ def getInstance():
     return toJson(response)
 
 
-@app.route('/getTrainSample')
+@app.route('/api/getTrainSample')
 def getTrainSample():
     idx = -10
     train_data_len = len(train_data)
@@ -133,7 +133,7 @@ def getTrainSample():
     return toJson(response)
 
 
-@app.route('/getAnchor')
+@app.route('/api/getAnchor')
 def getAnchor():
     try:
         idx = request.args.get('params')
@@ -152,7 +152,7 @@ def getAnchor():
 
 
 # 获取相似数据-影响训练点
-@app.route('/getInfluenceData')
+@app.route('/api/getInfluenceData')
 def getInfluenceData():
     try:
         idx = request.args.get('params')
@@ -187,7 +187,7 @@ def getInfluenceData():
     return toJson(response)
 
 
-@app.route('/getHelpfulData')
+@app.route('/api/getHelpfulData')
 def getHelpfulData():
     try:
         idx = request.args.get('params')
@@ -231,7 +231,7 @@ def getHelpfulData():
     return toJson(response)
 
 
-@app.route('/getDiceData')
+@app.route('/api/getDiceData')
 def getDiceData():
     try:
         idx = int(request.args.get('params'))
@@ -255,18 +255,18 @@ def getDiceData():
     return toJson(ans)
 
 
-@app.route('/getModeForm')
+@app.route('/api/getModeForm')
 def getModeForm():
     return toJson(categorical_names)
 
 
-@app.route('/getModelInfo')
+@app.route('/api/getModelInfo')
 def getModelInfo():
     ans = {'loss': loss, 'acc': acc, 'FN': FN, 'TN': TN, 'FP': FP, 'TP': TP, 'categorical_names': categorical_names}
     return toJson(ans)
 
 
-@app.route('/runModel', methods=['GET', 'POST'])
+@app.route('/api/runModel', methods=['GET', 'POST'])
 def runModel():
     params = request.json
     val = [[float(params[i]) for i in params]]
@@ -281,5 +281,5 @@ def runModel():
 # ------- Run WebApp ------- #
 
 if __name__ == '__main__':
-    app.run(port=3001, host="0.0.0.0", debug=True, threaded=True)
+    app.run(port=5002, host="0.0.0.0", debug=True, threaded=True)
 # serve(app, host="0.0.0.0",port=3001)
