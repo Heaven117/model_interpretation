@@ -187,6 +187,50 @@ def getInfluenceData():
     return toJson(response)
 
 
+@app.route('/getHelpfulData')
+def getHelpfulData():
+    try:
+        idx = request.args.get('params')
+    except:
+        return f"Please enter a sample number."
+    inData = influenceData[str(idx)]
+    influence = inData['influence']
+    helpful = inData['helpful']
+    harmful = inData['harmful']
+
+    response = {'harmful': [], 'helpful': []}
+    for i in range(len(helpful)):
+        response['helpful'].append({
+            'id': helpful[i],
+            'value': influence[helpful[i]],
+            'data': pre_data[helpful[i]]
+        })
+    response['helpful'].sort(key=lambda x: x['value'], reverse=True)
+    response['helpful'] = response['helpful'][:10]
+    response['helpful'].insert(0, {
+        'id': idx,
+        'value': 1,
+        'data': pre_data[int(idx)]
+    })
+
+    for i in range(len(harmful)):
+        response['harmful'].append({
+            'id': harmful[i],
+            'value': influence[harmful[i]],
+            'data': pre_data[harmful[i]]
+        })
+    response['harmful'].sort(key=lambda x: x['value'])
+    response['harmful'] = response['harmful'][:10]
+    response['harmful'].insert(0, {
+        'id': idx,
+        'value': 1,
+        'data': pre_data[int(idx)]
+    })
+    response['helpful'].reverse()
+    response['harmful'].reverse()
+    return toJson(response)
+
+
 @app.route('/getDiceData')
 def getDiceData():
     try:
