@@ -131,7 +131,7 @@ def calc_influence_single(model, train_loader, test_loader, test_id_num, recursi
 def calc_main(model, train_loader, test_loader, start=0):
     outdir = Path(args.out_dir)
     # todo test设置1
-    test_dataset_iter_len = 10
+    test_dataset_iter_len = 30
     # test_dataset_iter_len = len(test_loader.dataset)
     influences = {}
     last = start

@@ -1,7 +1,6 @@
 import warnings
 
 import pandas as pd
-from alibi.explainers import PartialDependenceVariance
 from flask import Flask
 from flask import request
 from sklearn.model_selection import train_test_split
@@ -32,10 +31,12 @@ with open(args.out_dir + getFileName('ianchors_beam', 'json'), 'r', encoding='ut
     anchorData = json.load(fp)
     print('=====anchor file read done')
 fp.close()
-# with open(args.out_dir + getFileName('dice', 'json'), 'r', encoding='utf-8') as fp:
-#     diceData = json.load(fp)
-#     print('=====dice file read done')
-# fp.close()
+with open(args.out_dir + getFileName('importance', 'json'), 'r', encoding='utf-8') as fp:
+    importanceData = json.load(fp)
+    feature_importance = importanceData['feature']
+    pd_values = importanceData['detail']
+    print('=====importance file read done')
+fp.close()
 
 # ------- Initialize Model ------- #
 dataset, target, encoder, categorical_names = load_adult_income_dataset()
@@ -46,16 +47,6 @@ train_dataset, test_dataset, y_train, y_test = train_test_split(dataset,
                                                                 stratify=target)
 model = load_model()
 loss, acc, FN, TN, FP, TP = test_model()
-
-predict_fn = lambda x: model.predict_anchor(x, encoder)
-explainer = PartialDependenceVariance(predictor=predict_fn,
-                                      feature_names=adult_process_names,
-                                      target_names=adult_target_value, verbose=True)
-exp_importance = explainer.explain(X=train_dataset,
-                                   method='importance',
-                                   grid_resolution=50)
-feature_importance = exp_importance.feature_importance
-pd_values = exp_importance.pd_values
 
 
 # ------ Help Function ------- #
@@ -78,6 +69,11 @@ def getSampleCovered(covered):
 
 # ------ Initialize WebApp ------- #
 app = Flask(__name__)
+
+
+@app.route('/')
+def index():
+    return 'hello'
 
 
 @app.route('/api/getGlobalData')
